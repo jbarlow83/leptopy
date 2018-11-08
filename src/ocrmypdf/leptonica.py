@@ -121,6 +121,26 @@ class LeptonicaIOError(LeptonicaError):
     pass
 
 
+class LeptonicaMethod:
+
+    def __init__(self, obj, method, method_type):
+        self.obj = obj
+        self.method = method
+        self.method_type = method_type
+
+    def __call__(self, *args):
+        args = [self.obj, *args]
+        c_args = [(arg._cdata if isinstance(arg, LeptonicaObject) else arg)
+                  for arg in args]
+        result = self.method(*c_args)
+        print(self.method_type.result.cname)
+        if self.method_type.result.cname == 'struct Pix *':
+            return Pix(result)
+
+    def __repr__(self):
+        return '<LeptonicaMethod %r(%r, ...)>' % (self.method, self.obj)
+
+
 class LeptonicaObject:
     """General wrapper for Leptonica objects
 
@@ -155,6 +175,21 @@ class LeptonicaObject:
         # cdata, in a temporary CDATA**.
         pp = ffi.new('{} **'.format(cls.LEPTONICA_TYPENAME), cdata)
         cls.cdata_destroy(pp)
+
+    def __getattr__(self, name):
+        lower_typename = self.LEPTONICA_TYPENAME.lower()
+        name_parts = name.split('_')
+        camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
+        camel_case = camel_case.replace('Rgb', 'RGB')
+
+        method = getattr(lept, camel_case, None)
+        if not method:
+            raise AttributeError(name + '/' + camel_case)
+        method_type = ffi.typeof(method)
+        if method_type.kind != 'function':
+            raise AttributeError(name + '/' + camel_case)
+
+        return LeptonicaMethod(self, method, method_type)
 
 
 class Pix(LeptonicaObject):
