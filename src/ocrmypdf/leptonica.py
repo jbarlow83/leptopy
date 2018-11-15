@@ -96,7 +96,9 @@ class _LeptonicaErrorTrap:
         assert not sys.stderr.closed
 
         # If there are Python errors, let them bubble up
-        if exc_type:
+        if exc_type is LeptonicaNullResultError:
+            raise LeptonicaError(leptonica_output) from exc_value
+        elif exc_type:
             logger.warning(leptonica_output)
             return False
 
@@ -117,11 +119,18 @@ class LeptonicaError(Exception):
     pass
 
 
+class LeptonicaNullResultError(Exception):
+    pass
+
+
 class LeptonicaIOError(LeptonicaError):
     pass
 
 
 class LeptonicaMethod:
+
+    typeof_pix = ffi.typeof('struct Pix *')
+    typeof_boxa = ffi.typeof('struct Boxa *')
 
     def __init__(self, obj, method, method_type):
         self.obj = obj
@@ -130,12 +139,27 @@ class LeptonicaMethod:
 
     def __call__(self, *args):
         args = [self.obj, *args]
-        c_args = [(arg._cdata if isinstance(arg, LeptonicaObject) else arg)
+        c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg)
                   for arg in args]
-        result = self.method(*c_args)
+        print(c_args)
+
+        expected_args = self.method_type.args
+        if expected_args[0] == self.typeof_pix:
+            if expected_args[1] == self.typeof_pix and (len(c_args) + 1) == len(expected_args):
+                # For pixFunction(pixd, pixs, ...), set pixd=NULL
+                c_args.insert(0, ffi.NULL)
+
+        print(c_args)
+
+        with _LeptonicaErrorTrap():
+            result = self.method(*c_args)
         print(self.method_type.result.cname)
-        if self.method_type.result.cname == 'struct Pix *':
+        if self.method_type.result == self.typeof_pix:
             return Pix(result)
+        elif self.method_type.result == self.typeof_boxa:
+            return BoxArray(result)
+        else:
+            return result
 
     def __repr__(self):
         return '<LeptonicaMethod %r(%r, ...)>' % (self.method, self.obj)
@@ -164,7 +188,7 @@ class LeptonicaObject:
 
     def __init__(self, cdata):
         if not cdata:
-            raise ValueError('Tried to wrap a NULL ' + self.LEPTONICA_TYPENAME)
+            raise LeptonicaNullResultError('Tried to wrap a NULL ' + self.LEPTONICA_TYPENAME)
         self._cdata = ffi.gc(cdata, self._destroy)
 
     @classmethod
@@ -181,8 +205,11 @@ class LeptonicaObject:
         name_parts = name.split('_')
         camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
         camel_case = camel_case.replace('Rgb', 'RGB')
+        camel_case = camel_case.replace('Bb', 'BB')
 
         method = getattr(lept, camel_case, None)
+        if not method:
+            method = getattr(lept, name, None)
         if not method:
             raise AttributeError(name + '/' + camel_case)
         method_type = ffi.typeof(method)
