@@ -585,14 +585,7 @@ class Pix(LeptonicaObject):
         with _LeptonicaErrorTrap():
             cropbox = Box(
                 lept.pixFindPageForeground(
-                    self._cdata,
-                    threshold,
-                    mindist,
-                    erasedist,
-                    pagenum,
-                    showmorph,
-                    display,
-                    pdfdir,
+                    self._cdata, threshold, mindist, erasedist, showmorph, ffi.NULL
                 )
             )
 
