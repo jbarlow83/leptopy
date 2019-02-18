@@ -34,7 +34,7 @@ from io import BytesIO
 from os import fspath
 from tempfile import TemporaryFile
 
-from .lib._leptonica import ffi
+from ._leptonica import ffi
 
 # pylint: disable=protected-access
 

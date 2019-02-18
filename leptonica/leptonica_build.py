@@ -4286,7 +4286,7 @@ l_uint8 * zlibUncompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 )
 
 
-ffibuilder.set_source("ocrmypdf.lib._leptonica", None)
+ffibuilder.set_source("leptonica._leptonica", "#include <leptonica/allheaders.h>", libraries=['lept'])
 
 if __name__ == '__main__':
     ffibuilder.compile(verbose=True)
