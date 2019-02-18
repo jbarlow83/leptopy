@@ -38,7 +38,7 @@ from ._leptonica import ffi
 
 # pylint: disable=protected-access
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("leptonica")
 
 lept = ffi.dlopen(find_library('lept'))
 lept.setMsgSeverity(lept.L_SEVERITY_WARNING)
@@ -891,69 +891,3 @@ def get_leptonica_version():
     a pointless effort to reclaim 100 bytes of memory.
     """
     return ffi.string(lept.getLeptonicaVersion()).decode()
-
-
-def deskew(infile, outfile, dpi):
-    try:
-        pix_source = Pix.open(infile)
-    except LeptonicaIOError:
-        raise LeptonicaIOError("Failed to open file: %s" % infile)
-
-    if dpi < 150:
-        reduction_factor = 1  # Don't downsample too much if DPI is already low
-    else:
-        reduction_factor = 0  # Use default
-    pix_deskewed = pix_source.deskew(reduction_factor)
-
-    try:
-        pix_deskewed.write_implied_format(outfile)
-    except LeptonicaIOError:
-        raise LeptonicaIOError("Failed to open destination file: %s" % outfile)
-
-
-def remove_background(
-    infile,
-    outfile,
-    tile_size=(40, 60),
-    gamma=1.0,
-    black_threshold=70,
-    white_threshold=190,
-):
-    try:
-        pix = Pix.open(infile)
-    except LeptonicaIOError:
-        raise LeptonicaIOError("Failed to open file: %s" % infile)
-
-    pix = pix.background_norm(tile_size=tile_size).gamma_trc(
-        gamma, black_threshold, white_threshold
-    )
-
-    try:
-        pix.write_implied_format(outfile)
-    except LeptonicaIOError:
-        raise LeptonicaIOError("Failed to open destination file: %s" % outfile)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Python wrapper to access Leptonica")
-
-    subparsers = parser.add_subparsers(
-        title='commands', description='supported operations'
-    )
-
-    parser_deskew = subparsers.add_parser('deskew')
-    parser_deskew.add_argument(
-        '-r',
-        '--dpi',
-        dest='dpi',
-        action='store',
-        type=int,
-        default=300,
-        help='input resolution',
-    )
-    parser_deskew.add_argument('infile', help='image to deskew')
-    parser_deskew.add_argument('outfile', help='deskewed output image')
-    parser_deskew.set_defaults(func=deskew)
-
-    args = parser.parse_args()
-    args.func(args)
