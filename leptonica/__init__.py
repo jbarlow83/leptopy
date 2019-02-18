@@ -28,6 +28,8 @@ from .core import (
     Sel,
     Pix,
     PixArray,
+    PixComp,
+    PixCompArray,
     LeptonicaError,
     LeptonicaIOError,
     LeptonicaNullResultError,

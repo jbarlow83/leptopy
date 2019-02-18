@@ -139,11 +139,11 @@ class LeptonicaIOError(LeptonicaError):
 TYPEMAP = {}
 
 
-def bind(ctype, cdata_destroy):
-    def cls_wrapper(cls, ctype=ctype, cdata_destroy=cdata_destroy):
-        typeof = ffi.typeof(ctype)
+def bind(ctypedef, cdata_destroy):
+    def cls_wrapper(cls, ctypedef=ctypedef, cdata_destroy=cdata_destroy):
+        typeof = ffi.typeof(ctypedef)
         TYPEMAP[typeof] = cls
-        cls._ctype = ctype
+        cls._ctypedef = ctypedef
         cls._cdata_destroy = cdata_destroy
         cls._typeof = typeof
         return cls
@@ -211,7 +211,7 @@ class LeptonicaObject:
 
     def __init__(self, cdata):
         if not cdata:
-            raise LeptonicaNullResultError(f'Tried to wrap a NULL {self._ctype}')
+            raise LeptonicaNullResultError(f'Tried to wrap a NULL {self._ctypedef}')
         self._cdata = ffi.gc(cdata, self._destroy)
 
     @classmethod
@@ -220,11 +220,11 @@ class LeptonicaObject:
         # Leptonica API uses double-pointers for its destroy APIs to prevent
         # dangling pointers. This means we need to append a '*' to whatever
         # ctype this class is associated with, to create a double-pointer.
-        pp = ffi.new(f'{cls._ctype}*', cdata)
+        pp = ffi.new(f'{cls._ctypedef}**', cdata)
         cls._cdata_destroy(pp)
 
     def __getattr__(self, name):
-        lower_typename = self._ctype.lower()
+        lower_typename = self._ctypedef.lower()
         name_parts = name.split('_')
         camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
         camel_case = camel_case.replace('Rgb', 'RGB')
@@ -242,7 +242,7 @@ class LeptonicaObject:
         return LeptonicaMethod(self, method, method_type)
 
 
-@bind('struct Pix *', lept.pixDestroy)
+@bind('PIX', lept.pixDestroy)
 class Pix(LeptonicaObject):
     """
     Wrapper around leptonica's PIX object.
@@ -772,7 +772,7 @@ class CompressedData(LeptonicaObject):
         return bytes(buf)
 
 
-@bind('struct Pixa *', lept.pixaDestroy)
+@bind('PIXA', lept.pixaDestroy)
 class PixArray(LeptonicaObject, Sequence):
     """Wrapper around PIXA (array of PIX)"""
 
@@ -788,7 +788,7 @@ class PixArray(LeptonicaObject, Sequence):
             return Box(lept.pixaGetBox(self._cdata, n, lept.L_CLONE))
 
 
-@bind('struct Box *', lept.boxDestroy)
+@bind('BOX', lept.boxDestroy)
 class Box(LeptonicaObject):
     """Wrapper around Leptonica's BOX objects (a pixel rectangle)
 
@@ -819,7 +819,7 @@ class Box(LeptonicaObject):
         return self._cdata.h
 
 
-@bind('struct Boxa *', lept.boxaDestroy)
+@bind('BOXA', lept.boxaDestroy)
 class BoxArray(LeptonicaObject, Sequence):
     """Wrapper around Leptonica's BOXA (Array of BOX) objects."""
 
@@ -840,7 +840,7 @@ class BoxArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
-@bind('struct Sarray *', lept.sarrayDestroy)
+@bind('SARRAY', lept.sarrayDestroy)
 class StringArray(LeptonicaObject, Sequence):
     """Leptonica SARRAY/string array"""
 
@@ -853,7 +853,7 @@ class StringArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
-@bind('struct Sel *', lept.selDestroy)
+@bind('SEL', lept.selDestroy)
 class Sel(LeptonicaObject):
     """Leptonica 'sel'/selection element for hit-miss transform"""
 
@@ -883,10 +883,54 @@ class Sel(LeptonicaObject):
         return '<Sel \n' + ffi.string(selstr).decode('ascii') + '\n>'
 
 
+@bind('PIXC', lept.pixcompDestroy)
+class PixComp(LeptonicaObject):
+    """Compressed image in memory"""
+
+    @property
+    def width(self):
+        return self._cdata.w
+
+    @property
+    def height(self):
+        return self._cdata.h
+
+    @property
+    def size(self):
+        return (self.width, self.height)
+
+    @property
+    def info(self):
+        return {'dpi': {'xres': self._cdata.xres, 'yres': self._cdata.yres}}
+
+    def topix(self):
+        return Pix(self.create_from_pixcomp(self._cdata))
+
+
+@bind('PIXAC', lept.pixacompDestroy)
+class PixCompArray(LeptonicaObject, Sequence):
+    def __repr__(self):
+        return f'<PixCompArray n={len(self)}>'
+
+    def __len__(self):
+        return self._cdata.n
+
+    def __getitem__(self, n):
+        if not isinstance(n, int):
+            raise TypeError('list indices must be integers')
+        if n < 0:
+            n += len(self)
+        if 0 <= n < len(self):
+            box = Box(lept.pixacompGetBox(self._cdata, n, lept.L_CLONE))
+            pixc = PixComp(lept.pixacompGetPix(self._cdata, n, lept.L_CLONE))
+            return (box, pixc)
+        raise IndexError(n)
+
+
 def get_leptonica_version():
     """Get Leptonica version string."""
     cresult = lept.getLeptonicaVersion()
     try:
-        result = ffi.string(cresult).decode()
+        return ffi.string(cresult).decode()
     finally:
         lept.lept_free(cresult)
