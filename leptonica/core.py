@@ -139,12 +139,15 @@ class LeptonicaIOError(LeptonicaError):
 TYPEMAP = {}
 
 
-def bind(ctypedef, cdata_destroy):
-    def cls_wrapper(cls, ctypedef=ctypedef, cdata_destroy=cdata_destroy):
+def bind(ctypedef, prefix, destroyer=''):
+    def cls_wrapper(cls, ctypedef=ctypedef, prefix=prefix, destroyer=destroyer):
         typeof = ffi.typeof(ctypedef)
         TYPEMAP[typeof] = cls
         cls._ctypedef = ctypedef
-        cls._cdata_destroy = cdata_destroy
+        cls._prefix = prefix
+        if not destroyer:
+            destroyer = getattr(lept, f'{cls._prefix}Destroy')
+        cls._destroyer = destroyer
         cls._typeof = typeof
         return cls
 
@@ -221,10 +224,10 @@ class LeptonicaObject:
         # dangling pointers. This means we need to append a '*' to whatever
         # ctype this class is associated with, to create a double-pointer.
         pp = ffi.new(f'{cls._ctypedef}**', cdata)
-        cls._cdata_destroy(pp)
+        cls._destroyer(pp)
 
     def __getattr__(self, name):
-        lower_typename = self._ctypedef.lower()
+        lower_typename = self._prefix
         name_parts = name.split('_')
         camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
         camel_case = camel_case.replace('Rgb', 'RGB')
@@ -242,7 +245,7 @@ class LeptonicaObject:
         return LeptonicaMethod(self, method, method_type)
 
 
-@bind('PIX', lept.pixDestroy)
+@bind('PIX', 'pix')
 class Pix(LeptonicaObject):
     """
     Wrapper around leptonica's PIX object.
@@ -574,24 +577,25 @@ class Pix(LeptonicaObject):
             return Pix(thresh_pix)
 
     def crop_to_foreground(
-        self,
-        threshold=128,
-        mindist=70,
-        erasedist=30,
-        pagenum=0,
-        showmorph=0,
-        display=0,
-        pdfdir=ffi.NULL,
+        self, threshold=128, mindist=70, erasedist=30, showmorph=0, debugpdf=''
     ):
+        if debugpdf:
+            pixac = PixCompArray(4)
+        else:
+            pixac = ffi.NULL
         with _LeptonicaErrorTrap():
             cropbox = Box(
                 lept.pixFindPageForeground(
-                    self._cdata, threshold, mindist, erasedist, showmorph, ffi.NULL
+                    self._cdata, threshold, mindist, erasedist, showmorph, pixac._cdata
                 )
             )
 
-            cropped_pix = lept.pixClipRectangle(self._cdata, cropbox._cdata, ffi.NULL)
+            if debugpdf:
+                pixac.convert_to_pdf(
+                    300, 1.0, lept.L_DEFAULT_ENCODE, 0, b"debug", os.fsencode(debugpdf)
+                )
 
+            cropped_pix = lept.pixClipRectangle(self._cdata, cropbox._cdata, ffi.NULL)
             return Pix(cropped_pix)
 
     def clean_background_to_white(
@@ -734,11 +738,9 @@ class Pix(LeptonicaObject):
         return pixsub
 
 
+@bind('L_COMP_DATA', prefix=None, destroyer=lept.l_CIDataDestroy)
 class CompressedData(LeptonicaObject):
     """Wrapper for L_COMP_DATA - abstract compressed image data"""
-
-    LEPTONICA_TYPENAME = 'L_COMP_DATA'
-    cdata_destroy = lept.l_CIDataDestroy
 
     @classmethod
     def open(cls, path, jpeg_quality=75):
@@ -772,7 +774,7 @@ class CompressedData(LeptonicaObject):
         return bytes(buf)
 
 
-@bind('PIXA', lept.pixaDestroy)
+@bind('PIXA', 'pixa')
 class PixArray(LeptonicaObject, Sequence):
     """Wrapper around PIXA (array of PIX)"""
 
@@ -788,7 +790,7 @@ class PixArray(LeptonicaObject, Sequence):
             return Box(lept.pixaGetBox(self._cdata, n, lept.L_CLONE))
 
 
-@bind('BOX', lept.boxDestroy)
+@bind('BOX', 'box')
 class Box(LeptonicaObject):
     """Wrapper around Leptonica's BOX objects (a pixel rectangle)
 
@@ -819,7 +821,7 @@ class Box(LeptonicaObject):
         return self._cdata.h
 
 
-@bind('BOXA', lept.boxaDestroy)
+@bind('BOXA', 'boxa')
 class BoxArray(LeptonicaObject, Sequence):
     """Wrapper around Leptonica's BOXA (Array of BOX) objects."""
 
@@ -840,7 +842,7 @@ class BoxArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
-@bind('SARRAY', lept.sarrayDestroy)
+@bind('SARRAY', 'sarray')
 class StringArray(LeptonicaObject, Sequence):
     """Leptonica SARRAY/string array"""
 
@@ -853,7 +855,7 @@ class StringArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
-@bind('SEL', lept.selDestroy)
+@bind('SEL', 'sel')
 class Sel(LeptonicaObject):
     """Leptonica 'sel'/selection element for hit-miss transform"""
 
@@ -883,7 +885,7 @@ class Sel(LeptonicaObject):
         return '<Sel \n' + ffi.string(selstr).decode('ascii') + '\n>'
 
 
-@bind('PIXC', lept.pixcompDestroy)
+@bind('PIXC', 'pixcomp')
 class PixComp(LeptonicaObject):
     """Compressed image in memory"""
 
@@ -907,8 +909,15 @@ class PixComp(LeptonicaObject):
         return Pix(self.create_from_pixcomp(self._cdata))
 
 
-@bind('PIXAC', lept.pixacompDestroy)
+@bind('PIXAC', 'pixacomp')
 class PixCompArray(LeptonicaObject, Sequence):
+    def __init__(self, param):
+        if isinstance(param, int):
+            cdata = lept.pixacompCreate(param)
+        else:
+            cdata = param
+        super().__init__(cdata)
+
     def __repr__(self):
         return f'<PixCompArray n={len(self)}>'
 
