@@ -37,7 +37,12 @@ from tempfile import TemporaryFile
 from PIL import Image
 
 from ._leptonica import ffi
-from ._leptonica import lib as lept
+
+try:
+    from ._leptonica import lib as lept
+except ImportError:
+    lept = ffi.dlopen(find_library('lept'))
+
 
 # pylint: disable=protected-access
 
