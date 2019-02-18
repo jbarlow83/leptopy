@@ -1,0 +1,27 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: leptopy
+Upstream-Contact: James R. Barlow <barlow.jim@gmail.com>
+Source: https://github.com/jbarlow83/leptopy
+
+Files: *
+Copyright:
+ (C) 2013-2019 James R. Barlow
+License: BSD-2-clause
+
+Files: docs tests/resources/*
+Copyright: (C) 2013-2018 James R. Barlow
+License: CC-BY-SA-4.0
+
+Files: tests/resources/congress.jpg
+Copyright: Public domain
+License: public-domain
+ Copyright on these files has expired.
+
+Files: tests/resources/baiona*.png
+Copyright: (C) 2014 Euskaldunaa
+License: CC-BY-SA-4.0
+
+Files: tests/resources/linn.png
+Copyright: (C) 1985 Forat Electronics
+License: GFDL-1.2+ or CC-BY-SA-3.0
+
