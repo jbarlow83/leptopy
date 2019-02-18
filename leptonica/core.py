@@ -167,11 +167,14 @@ class LeptonicaMethod:
         log.debug(c_args)
 
         expected_args = self.method_type.args
+
+        # For functions with the signature
+        #   pixFunction(pixd, pixs, ...)
+        # set pixd=NULL
         if expected_args[0] == self.typeof('Pix'):
             if expected_args[1] == self.typeof('Pix') and (len(c_args) + 1) == len(
                 expected_args
             ):
-                # For pixFunction(pixd, pixs, ...), set pixd=NULL
                 c_args.insert(0, ffi.NULL)
 
         log.debug(c_args)
@@ -205,24 +208,19 @@ class LeptonicaObject:
     so we do not need to mess with __del__.
     """
 
-    _cdata_destroy = lambda cdata: None
-    LEPTONICA_TYPENAME = ''
-
     def __init__(self, cdata):
         if not cdata:
-            raise LeptonicaNullResultError(
-                'Tried to wrap a NULL ' + self.LEPTONICA_TYPENAME
-            )
+            raise LeptonicaNullResultError(f'Tried to wrap a NULL {self._ctype}')
         self._cdata = ffi.gc(cdata, self._destroy)
 
     @classmethod
     def _destroy(cls, cdata):
         """Destroy some cdata"""
         # Leptonica API uses double-pointers for its destroy APIs to prevent
-        # dangling pointers. This means we need to put our single pointer,
-        # cdata, in a temporary CDATA**.
-        pp = ffi.new('{} **'.format(cls.LEPTONICA_TYPENAME), cdata)
-        cls.cdata_destroy(pp)
+        # dangling pointers. This means we need to append a '*' to whatever
+        # ctype this class is associated with, to create a double-pointer.
+        pp = ffi.new(f'{cls._ctype}*', cdata)
+        cls._cdata_destroy(pp)
 
     def __getattr__(self, name):
         lower_typename = self.LEPTONICA_TYPENAME.lower()
@@ -263,6 +261,8 @@ class Pix(LeptonicaObject):
     modified objects.  This allows convenient chaining:
 
     >>>   Pix.open('filename.jpg').scale((0.5, 0.5)).deskew().show()
+
+    The API follows the style of Pillow (Python Imaging Library) in many respects.
     """
 
     def __repr__(self):
@@ -279,7 +279,7 @@ class Pix(LeptonicaObject):
             return "<leptonica.Pix image NULL>"
 
     def _repr_png_(self):
-        """iPython display hook
+        """IPython display hook
 
         returns png version of image
         """
@@ -882,12 +882,10 @@ class Sel(LeptonicaObject):
         return '<Sel \n' + ffi.string(selstr).decode('ascii') + '\n>'
 
 
-@lru_cache(maxsize=1)
 def get_leptonica_version():
-    """Get Leptonica version string.
-
-    Caveat: Leptonica expects the caller to free this memory.  We don't,
-    since that would involve binding to libc to access libc.free(),
-    a pointless effort to reclaim 100 bytes of memory.
-    """
-    return ffi.string(lept.getLeptonicaVersion()).decode()
+    """Get Leptonica version string."""
+    cresult = lept.getLeptonicaVersion()
+    try:
+        result = ffi.string(cresult).decode()
+    finally:
+        lept.lept_free(cresult)
