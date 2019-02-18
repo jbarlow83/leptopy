@@ -1,5 +1,4 @@
-Leptopy: Python bindings for Leptonica
-======================================
+# Leptopy: Python bindings for Leptonica
 
 This is a modern and comprehensive set of Python bindings for Leptonica, spun off from
 OCRmyPDF and released under a BSD-2-Clause license like Leptonica itself.

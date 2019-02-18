@@ -20,6 +20,8 @@ docs/_templates/
 docs/Makefile
 leptonica/*.so
 leptonica/*.dylib
+leptonica/_leptonica.py
+pip-wheel-metadata/
 
 # Code coverage
 .coverage*
