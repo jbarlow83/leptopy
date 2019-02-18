@@ -131,15 +131,30 @@ class LeptonicaIOError(LeptonicaError):
     pass
 
 
+TYPEMAP = {}
+
+
+def bind(ctype, cdata_destroy):
+    def cls_wrapper(cls, ctype=ctype, cdata_destroy=cdata_destroy):
+        typeof = ffi.typeof(ctype)
+        TYPEMAP[typeof] = cls
+        cls._ctype = ctype
+        cls._cdata_destroy = cdata_destroy
+        cls._typeof = typeof
+        return cls
+
+    return cls_wrapper
+
+
 class LeptonicaMethod:
-
-    typeof_pix = ffi.typeof('struct Pix *')
-    typeof_boxa = ffi.typeof('struct Boxa *')
-
     def __init__(self, obj, method, method_type):
         self.obj = obj
         self.method = method
         self.method_type = method_type
+
+    @staticmethod
+    def typeof(structname):
+        return ffi.typeof(f'struct {structname} *')
 
     def __call__(self, *args):
         args = [self.obj, *args]
@@ -147,8 +162,8 @@ class LeptonicaMethod:
         log.debug(c_args)
 
         expected_args = self.method_type.args
-        if expected_args[0] == self.typeof_pix:
-            if expected_args[1] == self.typeof_pix and (len(c_args) + 1) == len(
+        if expected_args[0] == self.typeof('Pix'):
+            if expected_args[1] == self.typeof('Pix') and (len(c_args) + 1) == len(
                 expected_args
             ):
                 # For pixFunction(pixd, pixs, ...), set pixd=NULL
@@ -159,6 +174,9 @@ class LeptonicaMethod:
         with _LeptonicaErrorTrap():
             result = self.method(*c_args)
         log.debug(self.method_type.result.cname)
+
+        wrapper_class = TYPEMAP.get(self.method_type.result, lambda passthru: passthru)
+        return wrapper_class(result)
 
     def __repr__(self):
         return '<LeptonicaMethod %r(%r, ...)>' % (self.method, self.obj)
@@ -182,7 +200,7 @@ class LeptonicaObject:
     so we do not need to mess with __del__.
     """
 
-    cdata_destroy = lambda cdata: None
+    _cdata_destroy = lambda cdata: None
     LEPTONICA_TYPENAME = ''
 
     def __init__(self, cdata):
@@ -220,6 +238,7 @@ class LeptonicaObject:
         return LeptonicaMethod(self, method, method_type)
 
 
+@bind('struct Pix *', lept.pixDestroy)
 class Pix(LeptonicaObject):
     """
     Wrapper around leptonica's PIX object.
@@ -240,9 +259,6 @@ class Pix(LeptonicaObject):
 
     >>>   Pix.open('filename.jpg').scale((0.5, 0.5)).deskew().show()
     """
-
-    LEPTONICA_TYPENAME = "PIX"
-    cdata_destroy = lept.pixDestroy
 
     def __repr__(self):
         if self._cdata:
@@ -757,11 +773,9 @@ class CompressedData(LeptonicaObject):
         return bytes(buf)
 
 
+@bind('struct Pixa *', lept.pixaDestroy)
 class PixArray(LeptonicaObject, Sequence):
     """Wrapper around PIXA (array of PIX)"""
-
-    LEPTONICA_TYPENAME = 'PIXA'
-    cdata_destroy = lept.pixaDestroy
 
     def __len__(self):
         return self._cdata[0].n
@@ -775,14 +789,12 @@ class PixArray(LeptonicaObject, Sequence):
             return Box(lept.pixaGetBox(self._cdata, n, lept.L_CLONE))
 
 
+@bind('struct Box *', lept.boxDestroy)
 class Box(LeptonicaObject):
     """Wrapper around Leptonica's BOX objects (a pixel rectangle)
 
     Uses x, y, w, h coordinates.
     """
-
-    LEPTONICA_TYPENAME = 'BOX'
-    cdata_destroy = lept.boxDestroy
 
     def __repr__(self):
         if self._cdata:
@@ -808,11 +820,9 @@ class Box(LeptonicaObject):
         return self._cdata.h
 
 
+@bind('struct Boxa *', lept.boxaDestroy)
 class BoxArray(LeptonicaObject, Sequence):
     """Wrapper around Leptonica's BOXA (Array of BOX) objects."""
-
-    LEPTONICA_TYPENAME = 'BOXA'
-    cdata_destroy = lept.boxaDestroy
 
     def __repr__(self):
         if not self._cdata:
@@ -831,11 +841,9 @@ class BoxArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
+@bind('struct Sarray *', lept.sarrayDestroy)
 class StringArray(LeptonicaObject, Sequence):
     """Leptonica SARRAY/string array"""
-
-    LEPTONICA_TYPENAME = 'SARRAY'
-    cdata_destroy = lept.sarrayDestroy
 
     def __len__(self):
         return self._cdata.n
@@ -846,11 +854,9 @@ class StringArray(LeptonicaObject, Sequence):
         raise IndexError(n)
 
 
+@bind('struct Sel *', lept.selDestroy)
 class Sel(LeptonicaObject):
     """Leptonica 'sel'/selection element for hit-miss transform"""
-
-    LEPTONICA_TYPENAME = 'SEL'
-    cdata_destroy = lept.selDestroy
 
     @classmethod
     def from_selstr(cls, selstr, name):
