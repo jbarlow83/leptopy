@@ -24,6 +24,7 @@
 import argparse
 import logging
 import os
+import re
 import sys
 import warnings
 from collections.abc import Sequence
@@ -136,12 +137,130 @@ class LeptonicaIOError(LeptonicaError):
     pass
 
 
+re_bindable = re.compile(
+    r"""^(
+    bbuffer|
+    bmf|
+    box|
+    boxa|
+    boxaa|
+    ccb|
+    ccba|
+    dewarp|
+    dewarpa|
+    dpix|
+    fpix|
+    gplot|
+    kernel|
+    l_amap|
+    l_aset|
+    l_dna|
+    l_dnaa|
+    l_rbtree|
+    list|
+    numa|
+    numaa|
+    pix|
+    pixa|
+    pixaa|
+    pixacc|
+    pixacomp|
+    pixc|
+    pixcmap|
+    pta|
+    ptra|
+    ptraa|
+    recog|
+    reg|
+    sarray|
+    sela|
+    strcode|
+    sudoku
+    )
+    ([A-Z]\w+)$""",
+    flags=re.VERBOSE,
+)
+
+re_decamel = re.compile(
+    r"""
+    (WebP|
+    RGBA32|
+    RGBA|
+    RGB|
+    VShear|
+    HShear|
+    TRC|
+    CMYK|
+    UL|
+    WH|
+    LS|
+    SVG|
+    HSV|
+    XYZ|
+    LAB|
+    FHMT|
+    HMT|
+    FPix|
+    LR|
+    TB|
+    XY[12N]|
+    [A-Z][a-z0-9]+)""",
+    flags=re.VERBOSE,
+)
+
+from collections import defaultdict
+
+FUNCTIONS = defaultdict(lambda: {})
+
+
+def decamel(method):
+    return '_'.join(s.lower() for s in re_decamel.split(method) if s)
+
+
+for name in dir(lept):
+    m = re_bindable.match(name)
+    if m:
+        prefix, method = m.group(1), m.group(2)
+        FUNCTIONS[prefix][decamel(method)] = getattr(lept, name)
+
+
 TYPEMAP = {}
+
+
+def bound_function(leptname, leptfn):
+    def call(self, *args):
+        all_args = [self, *args]
+        c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in all_args]
+        log.debug(c_args)
+
+        method_type = ffi.typeof(leptfn)
+        expected_args = method_type.args
+        # For functions with the signature
+        #   pixFunction(pixd, pixs, ...)
+        # set pixd=NULL
+        if (
+            expected_args[0] == ffi.typeof('PIX*')
+            and expected_args[1] == ffi.typeof('PIX*')
+            and (len(c_args) + 1) == len(expected_args)
+        ):
+            c_args.insert(0, ffi.NULL)
+
+        log.debug(c_args)
+
+        with _LeptonicaErrorTrap():
+            result = leptfn(*c_args)
+        log.debug(method_type.result.cname)
+
+        wrapper_class = TYPEMAP.get(method_type.result, lambda passthru: passthru)
+        return wrapper_class(result)
+
+    call.__name__ = leptname
+    return call
 
 
 def bind(ctypedef, prefix, destroyer=''):
     def cls_wrapper(cls, ctypedef=ctypedef, prefix=prefix, destroyer=destroyer):
-        typeof = ffi.typeof(ctypedef)
+        typeof = ffi.typeof(f'{ctypedef} *')
         TYPEMAP[typeof] = cls
         cls._ctypedef = ctypedef
         cls._prefix = prefix
@@ -149,6 +268,12 @@ def bind(ctypedef, prefix, destroyer=''):
             destroyer = getattr(lept, f'{cls._prefix}Destroy')
         cls._destroyer = destroyer
         cls._typeof = typeof
+        if prefix in FUNCTIONS:
+            for method, fn in FUNCTIONS[prefix].items():
+                if hasattr(cls, method):
+                    continue
+                setattr(cls, method, bound_function(method, fn))
+
         return cls
 
     return cls_wrapper
