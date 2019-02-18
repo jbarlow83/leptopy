@@ -34,13 +34,15 @@ from io import BytesIO
 from os import fspath
 from tempfile import TemporaryFile
 
+from PIL import Image
+
 from ._leptonica import ffi
+from ._leptonica import lib as lept
 
 # pylint: disable=protected-access
 
-logger = logging.getLogger("leptonica")
+log = logging.getLogger("leptonica")
 
-lept = ffi.dlopen(find_library('lept'))
 lept.setMsgSeverity(lept.L_SEVERITY_WARNING)
 
 

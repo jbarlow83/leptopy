@@ -22,15 +22,18 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 if sys.version_info < (3, 6):
     print("Python 3.6 or newer is required", file=sys.stderr)
     sys.exit(1)
 
 from setuptools import setup, find_packages
 
+
 def readme():
     with open('README.md', encoding='utf-8') as f:
         return f.read()
+
 
 setup(
     name='leptopy',
@@ -54,26 +57,19 @@ setup(
         "Operating System :: POSIX :: BSD",
         "Operating System :: POSIX :: Linux",
         "Topic :: Scientific/Engineering :: Image Recognition",
-        ],
+    ],
     python_requires=' >= 3.6',
     setup_requires=[
-        'cffi >= 1.9.1',        # to build the leptonica module
-        'setuptools_scm',       # so that version will work
-        'setuptools_scm_git_archive'    # enable version from github tarballs
+        'cffi >= 1.9.1, < 2',  # to build the leptonica module
+        'setuptools_scm',  # so that version will work
+        'setuptools_scm_git_archive',  # enable version from github tarballs
     ],
     use_scm_version={'version_scheme': 'post-release'},
-    cffi_modules=[
-        'leptonica/leptonica_build.py:ffibuilder'
-    ],
+    cffi_modules=['leptonica/leptonica_build.py:ffibuilder'],
     install_requires=[
-        'cffi >= 1.9.1',          # must be a setup and install requirement
+        'cffi >= 1.9.1, < 2',  # must be a setup and install requirement
+        'pillow >= 5, < 6',
     ],
-    tests_require=[
-        'pytest >= 3',
-    ],
-    project_urls={
-        'Documentation': '',
-        'Source': '',
-        'Tracker': ''
-    }
+    tests_require=['pytest >= 3, < 5'],
+    project_urls={'Documentation': '', 'Source': '', 'Tracker': ''},
 )

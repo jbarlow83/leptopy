@@ -2,7 +2,6 @@
 .bash_history
 .pylintrc
 .pytest_cache/
-.ruffus_history.sqlite
 .venv/
 *.pyc
 *.sublime-*
@@ -19,7 +18,8 @@ docs/_build/
 docs/_static/
 docs/_templates/
 docs/Makefile
-ocrmypdf/lib/_*.py
+leptonica/*.so
+leptonica/*.dylib
 
 # Code coverage
 .coverage*
