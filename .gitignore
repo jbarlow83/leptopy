@@ -1,0 +1,41 @@
+# Development environment
+.bash_history
+.pylintrc
+.pytest_cache/
+.ruffus_history.sqlite
+.venv/
+*.pyc
+*.sublime-*
+
+# Package building
+.eggs/
+*.egg-info/
+build/
+dist/
+wheelhouse/
+
+# Automatically generated files
+docs/_build/
+docs/_static/
+docs/_templates/
+docs/Makefile
+ocrmypdf/lib/_*.py
+
+# Code coverage
+.coverage*
+htmlcov/
+
+# Testing
+.ipynb_checkpoints/
+.vscode/
+*.ipynb
+*.profile
+/*.pdf
+/*.qdf
+/*.png
+/scratch.py
+IDEAS
+log/
+tests/output/
+tests/resources/private/
+tmp/
