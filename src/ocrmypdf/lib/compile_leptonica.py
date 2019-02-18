@@ -20,7 +20,8 @@ from cffi import FFI
 
 ffibuilder = FFI()
 
-ffibuilder.cdef("""
+ffibuilder.cdef(
+    """
 
 /* 146 "./environ.h" */
 
@@ -1575,9 +1576,11 @@ typedef struct L_WShed L_WSHED;
 
 /* 64 "alltypes.h" 2 */
 
-""")
+"""
+)
 
-ffibuilder.cdef("""
+ffibuilder.cdef(
+    """
 /*====================================================================*
  -  Copyright (C) 2001 Leptonica.  All rights reserved.
  -
@@ -4273,7 +4276,8 @@ l_int32 pixDisplayWrite ( PIX *pixs, l_int32 reduction );
 l_uint8 * zlibCompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 l_uint8 * zlibUncompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 
-""")
+"""
+)
 
 
 ffibuilder.set_source("ocrmypdf.lib._leptonica", None)
