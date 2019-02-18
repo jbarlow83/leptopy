@@ -103,7 +103,7 @@ class _LeptonicaErrorTrap:
         if exc_type is LeptonicaNullResultError:
             raise LeptonicaError(leptonica_output) from exc_value
         elif exc_type:
-            logger.warning(leptonica_output)
+            log.warning(leptonica_output)
             return False
 
         # If there are Leptonica errors, wrap them in Python excpetions
@@ -144,7 +144,7 @@ class LeptonicaMethod:
     def __call__(self, *args):
         args = [self.obj, *args]
         c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in args]
-        print(c_args)
+        log.debug(c_args)
 
         expected_args = self.method_type.args
         if expected_args[0] == self.typeof_pix:
@@ -154,17 +154,11 @@ class LeptonicaMethod:
                 # For pixFunction(pixd, pixs, ...), set pixd=NULL
                 c_args.insert(0, ffi.NULL)
 
-        print(c_args)
+        log.debug(c_args)
 
         with _LeptonicaErrorTrap():
             result = self.method(*c_args)
-        print(self.method_type.result.cname)
-        if self.method_type.result == self.typeof_pix:
-            return Pix(result)
-        elif self.method_type.result == self.typeof_boxa:
-            return BoxArray(result)
-        else:
-            return result
+        log.debug(self.method_type.result.cname)
 
     def __repr__(self):
         return '<LeptonicaMethod %r(%r, ...)>' % (self.method, self.obj)
