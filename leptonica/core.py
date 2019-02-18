@@ -171,11 +171,12 @@ class LeptonicaMethod:
         # For functions with the signature
         #   pixFunction(pixd, pixs, ...)
         # set pixd=NULL
-        if expected_args[0] == self.typeof('Pix'):
-            if expected_args[1] == self.typeof('Pix') and (len(c_args) + 1) == len(
-                expected_args
-            ):
-                c_args.insert(0, ffi.NULL)
+        if (
+            expected_args[0] == self.typeof('Pix')
+            and expected_args[1] == self.typeof('Pix')
+            and (len(c_args) + 1) == len(expected_args)
+        ):
+            c_args.insert(0, ffi.NULL)
 
         log.debug(c_args)
 
@@ -223,7 +224,7 @@ class LeptonicaObject:
         cls._cdata_destroy(pp)
 
     def __getattr__(self, name):
-        lower_typename = self.LEPTONICA_TYPENAME.lower()
+        lower_typename = self._ctype.lower()
         name_parts = name.split('_')
         camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
         camel_case = camel_case.replace('Rgb', 'RGB')
@@ -445,7 +446,7 @@ class Pix(LeptonicaObject):
             return Pix(lept.pixDeskew(self._cdata, reduction_factor))
 
     def scale(self, scale_xy):
-        "Returns the pix object rescaled according to the proportions given."
+        """Returns the pix object rescaled according to the proportions given."""
         with _LeptonicaErrorTrap():
             return Pix(lept.pixScale(self._cdata, scale_xy[0], scale_xy[1]))
 
@@ -454,7 +455,7 @@ class Pix(LeptonicaObject):
             return Pix(lept.pixRotate180(ffi.NULL, self._cdata))
 
     def rotate_orth(self, quads):
-        "Orthographic rotation, quads: 0-3, number of clockwise rotations"
+        """Orthographic rotation, quads: 0-3, number of clockwise rotations"""
         with _LeptonicaErrorTrap():
             return Pix(lept.pixRotateOrth(self._cdata, quads))
 
