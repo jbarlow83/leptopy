@@ -30,7 +30,7 @@ import warnings
 from collections.abc import Sequence
 from contextlib import suppress
 from ctypes.util import find_library
-from functools import lru_cache
+from functools import lru_cache, partial, partialmethod
 from io import BytesIO
 from os import fspath
 from tempfile import TemporaryFile
@@ -227,35 +227,38 @@ for name in dir(lept):
 TYPEMAP = {}
 
 
-def bound_function(leptname, leptfn):
-    def call(self, *args):
-        all_args = [self, *args]
-        c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in all_args]
-        log.debug(c_args)
+def lept_call(*args, fn=None, prepend=None):
+    if prepend:
+        args = [*prepend, *args]
+    c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in args]
+    log.debug(c_args)
+    typeof_fn = ffi.typeof(fn)
+    with _LeptonicaErrorTrap():
+        result = fn(*c_args)
+    log.debug(typeof_fn.result.cname)
+    wrapper_class = TYPEMAP.get(typeof_fn.result, lambda passthru: passthru)
+    return wrapper_class(result)
 
-        method_type = ffi.typeof(leptfn)
-        expected_args = method_type.args
-        # For functions with the signature
-        #   pixFunction(pixd, pixs, ...)
-        # set pixd=NULL
-        if (
-            expected_args[0] == ffi.typeof('PIX*')
-            and expected_args[1] == ffi.typeof('PIX*')
-            and (len(c_args) + 1) == len(expected_args)
-        ):
-            c_args.insert(0, ffi.NULL)
 
-        log.debug(c_args)
+def make_binding(leptfn):
+    typeof_fn = ffi.typeof(leptfn)
+    expected_args = typeof_fn.args
 
-        with _LeptonicaErrorTrap():
-            result = leptfn(*c_args)
-        log.debug(method_type.result.cname)
+    typeof_pix = ffi.typeof('PIX*')
+    try:
+        if expected_args[0] == typeof_pix and expected_args[1] == typeof_pix:
+            # For functions with the signature
+            #   pixFunction(pixd, pixs, ...)
+            # set pixd=NULL
+            return partialmethod(lept_call, fn=leptfn, prepend=[ffi.NULL])
+    except IndexError:
+        pass
 
-        wrapper_class = TYPEMAP.get(method_type.result, lambda passthru: passthru)
-        return wrapper_class(result)
+    self_class = TYPEMAP.get(expected_args[0])
+    if self_class:
+        return partialmethod(lept_call, fn=leptfn)
 
-    call.__name__ = leptname
-    return call
+    return partialmethod(staticmethod(lept_call), fn=leptfn)
 
 
 def bind(ctypedef, prefix, destroyer=''):
@@ -269,54 +272,14 @@ def bind(ctypedef, prefix, destroyer=''):
         cls._destroyer = destroyer
         cls._typeof = typeof
         if prefix in FUNCTIONS:
-            for method, fn in FUNCTIONS[prefix].items():
-                if hasattr(cls, method):
+            for methodname, fn in FUNCTIONS[prefix].items():
+                if hasattr(cls, methodname):
                     continue
-                setattr(cls, method, bound_function(method, fn))
+                setattr(cls, methodname, make_binding(fn))
 
         return cls
 
     return cls_wrapper
-
-
-class LeptonicaMethod:
-    def __init__(self, obj, method, method_type):
-        self.obj = obj
-        self.method = method
-        self.method_type = method_type
-
-    @staticmethod
-    def typeof(structname):
-        return ffi.typeof(f'struct {structname} *')
-
-    def __call__(self, *args):
-        args = [self.obj, *args]
-        c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in args]
-        log.debug(c_args)
-
-        expected_args = self.method_type.args
-
-        # For functions with the signature
-        #   pixFunction(pixd, pixs, ...)
-        # set pixd=NULL
-        if (
-            expected_args[0] == self.typeof('Pix')
-            and expected_args[1] == self.typeof('Pix')
-            and (len(c_args) + 1) == len(expected_args)
-        ):
-            c_args.insert(0, ffi.NULL)
-
-        log.debug(c_args)
-
-        with _LeptonicaErrorTrap():
-            result = self.method(*c_args)
-        log.debug(self.method_type.result.cname)
-
-        wrapper_class = TYPEMAP.get(self.method_type.result, lambda passthru: passthru)
-        return wrapper_class(result)
-
-    def __repr__(self):
-        return '<LeptonicaMethod %r(%r, ...)>' % (self.method, self.obj)
 
 
 class LeptonicaObject:
@@ -350,24 +313,6 @@ class LeptonicaObject:
         # ctype this class is associated with, to create a double-pointer.
         pp = ffi.new(f'{cls._ctypedef}**', cdata)
         cls._destroyer(pp)
-
-    def __getattr__(self, name):
-        lower_typename = self._prefix
-        name_parts = name.split('_')
-        camel_case = lower_typename + ''.join(s.capitalize() for s in name_parts)
-        camel_case = camel_case.replace('Rgb', 'RGB')
-        camel_case = camel_case.replace('Bb', 'BB')
-
-        method = getattr(lept, camel_case, None)
-        if not method:
-            method = getattr(lept, name, None)
-        if not method:
-            raise AttributeError(name + '/' + camel_case)
-        method_type = ffi.typeof(method)
-        if method_type.kind != 'function':
-            raise AttributeError(name + '/' + camel_case)
-
-        return LeptonicaMethod(self, method, method_type)
 
 
 @bind('PIX', 'pix')
