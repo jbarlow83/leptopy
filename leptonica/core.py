@@ -227,7 +227,7 @@ for name in dir(lept):
 TYPEMAP = {}
 
 
-def lept_call(*args, fn=None, prepend=None):
+def lept_call(fn, *args, prepend=None):
     if prepend:
         args = [*prepend, *args]
     c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in args]
@@ -240,6 +240,10 @@ def lept_call(*args, fn=None, prepend=None):
     return wrapper_class(result)
 
 
+def lept_method(self, fn, *args, prepend=None):
+    return lept_call(fn, self, *args, prepend=prepend)
+
+
 def make_binding(leptfn):
     typeof_fn = ffi.typeof(leptfn)
     expected_args = typeof_fn.args
@@ -250,15 +254,16 @@ def make_binding(leptfn):
             # For functions with the signature
             #   pixFunction(pixd, pixs, ...)
             # set pixd=NULL
-            return partialmethod(lept_call, fn=leptfn, prepend=[ffi.NULL])
+            # TODO not true in general
+            return partialmethod(lept_method, leptfn, prepend=[ffi.NULL])
     except IndexError:
         pass
 
     self_class = TYPEMAP.get(expected_args[0])
     if self_class:
-        return partialmethod(lept_call, fn=leptfn)
+        return partialmethod(lept_method, leptfn)
 
-    return partialmethod(staticmethod(lept_call), fn=leptfn)
+    return partialmethod(staticmethod(lept_method), leptfn)
 
 
 def bind(ctypedef, prefix, destroyer=''):
@@ -299,6 +304,9 @@ class LeptonicaObject:
     CFFI ensures that the destroy function is called at garbage collection time
     so we do not need to mess with __del__.
     """
+
+    _ctypedef, _prefix, _typeof = None, None, None
+    _destroyer = lambda x: None
 
     def __init__(self, cdata):
         if not cdata:
@@ -654,10 +662,14 @@ class Pix(LeptonicaObject):
         else:
             pixac = ffi.NULL
         with _LeptonicaErrorTrap():
-            cropbox = Box(
-                lept.pixFindPageForeground(
-                    self._cdata, threshold, mindist, erasedist, showmorph, pixac._cdata
-                )
+            cropbox = lept_call(
+                lept.pixFindPageForeground,
+                self,
+                threshold,
+                mindist,
+                erasedist,
+                showmorph,
+                pixac,
             )
 
             if debugpdf:
