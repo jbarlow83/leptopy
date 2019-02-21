@@ -369,7 +369,10 @@ class Pix(LeptonicaObject):
         data = ffi.new('l_uint8 **')
         size = ffi.new('size_t *')
 
-        err = lept.pixWriteMemPng(data, size, self._cdata, 0)
+        scale = 1080.0 / self.height if self.height > 0 else 1
+        pix_scaled = self.scale((scale, scale))
+
+        err = lept.pixWriteMemPng(data, size, pix_scaled._cdata, 0)
         if err != 0:
             raise LeptonicaIOError("pixWriteMemPng")
 
