@@ -952,8 +952,11 @@ class Sel(LeptonicaObject):
 
     @classmethod
     def from_selstr(cls, selstr, name):
-        # TODO this will strip a horizontal line of don't care's
-        lines = [line.strip() for line in selstr.split('\n') if line.strip()]
+        lines = [line for line in selstr.split('\n')]
+        while lines and lines[0] == '':
+            lines = lines[1:]
+        while lines and lines[-1] == '':
+            lines = lines[:-1]
         h = len(lines)
         w = len(lines[0])
         lengths = set(len(line) for line in lines)
