@@ -221,7 +221,12 @@ for name in dir(lept):
     m = re_bindable.match(name)
     if m:
         prefix, method = m.group(1), m.group(2)
-        FUNCTIONS[prefix][decamel(method)] = getattr(lept, name)
+        try:
+            FUNCTIONS[prefix][decamel(method)] = getattr(lept, name)
+        except ffi.error as e:
+            if 'symbol not found' in str(e):
+                continue
+            raise
 
 
 TYPEMAP = {}
@@ -234,7 +239,10 @@ def lept_call(fn, *args, prepend=None):
     log.debug(c_args)
     typeof_fn = ffi.typeof(fn)
     with _LeptonicaErrorTrap():
-        result = fn(*c_args)
+        try:
+            result = fn(*c_args)
+        except TypeError as e:
+            raise TypeError(typeof_fn.cname + ': ' + str(e)) from None
     log.debug(typeof_fn.result.cname)
     wrapper_class = TYPEMAP.get(typeof_fn.result, lambda passthru: passthru)
     return wrapper_class(result)
