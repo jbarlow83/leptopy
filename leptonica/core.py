@@ -313,6 +313,12 @@ class LeptonicaObject:
             raise LeptonicaNullResultError(f'Tried to wrap a NULL {self._ctypedef}')
         self._cdata = ffi.gc(cdata, self._destroy)
 
+    def __copy__(self):
+        copier = getattr(lept, f'{self._prefix}Copy')
+        if not copier:
+            raise NotImplementedError(f'{self._prefix}Copy')
+        return lept_method(self, copier, prepend=[ffi.NULL])
+
     @classmethod
     def _destroy(cls, cdata):
         """Destroy some cdata"""
