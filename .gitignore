@@ -5,6 +5,7 @@
 .venv/
 *.pyc
 *.sublime-*
+.DS_Store
 
 # Package building
 .eggs/
