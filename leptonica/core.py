@@ -540,15 +540,6 @@ class Pix(LeptonicaObject):
         with _LeptonicaErrorTrap():
             return Pix(lept.pixScale(self._cdata, scale_xy[0], scale_xy[1]))
 
-    def rotate180(self):
-        with _LeptonicaErrorTrap():
-            return Pix(lept.pixRotate180(ffi.NULL, self._cdata))
-
-    def rotate_orth(self, quads):
-        """Orthographic rotation, quads: 0-3, number of clockwise rotations"""
-        with _LeptonicaErrorTrap():
-            return Pix(lept.pixRotateOrth(self._cdata, quads))
-
     def find_skew(self):
         """Returns a tuple (deskew angle in degrees, confidence value).
 
