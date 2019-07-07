@@ -553,7 +553,12 @@ class Pix(LeptonicaObject):
         with _LeptonicaErrorTrap():
             angle = ffi.new('float *', 0.0)
             confidence = ffi.new('float *', 0.0)
-            result = lept.pixFindSkew(self._cdata, angle, confidence)
+
+            if self.depth != 1:
+                pix = Pix(lept.pixConvertTo1(self._cdata, 130))
+            else:
+                pix = self
+            result = lept.pixFindSkew(pix._cdata, angle, confidence)
             if result == 0:
                 return (angle[0], confidence[0])
             else:
