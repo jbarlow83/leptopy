@@ -409,6 +409,11 @@ class Pix(LeptonicaObject):
         pix = lept.pixDeserializeFromMemory(cdata_uint32, len(state['data']))
         Pix.__init__(self, pix)
 
+    def toarray(self):
+        import numpy as np
+
+        return np.asarray(self.topil())
+
     def __eq__(self, other):
         if not isinstance(other, Pix):
             return NotImplemented
