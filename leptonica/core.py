@@ -456,6 +456,8 @@ class Pix(LeptonicaObject):
 
         return np.asarray(self.topil())
 
+    __array__ = toarray
+
     def __eq__(self, other):
         if not isinstance(other, Pix):
             return NotImplemented
