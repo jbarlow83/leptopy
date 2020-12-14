@@ -7,6 +7,6 @@ Leptonica is an image processing library geared towards scanned image processing
 document processing, binary morphology and OCR.
 
 CFFI is used instead of ctypes. The regularity and consistent design of Leptonica is
-exploiting to create bindings efficiently.
+exploited to create bindings efficiently.
 
 Python 3.6+ is required.

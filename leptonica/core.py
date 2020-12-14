@@ -22,6 +22,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
+import keyword
 import logging
 import os
 import re
@@ -214,7 +215,10 @@ FUNCTIONS = defaultdict(lambda: {})
 
 
 def decamel(method):
-    return '_'.join(s.lower() for s in re_decamel.split(method) if s)
+    result = '_'.join(s.lower() for s in re_decamel.split(method) if s)
+    if keyword.iskeyword(result):
+        result += '_'
+    return result
 
 
 for name in dir(lept):
@@ -233,6 +237,15 @@ TYPEMAP = {}
 
 
 def lept_call(fn, *args, prepend=None):
+    """Wrap a leptonica call.
+
+    Any arguments in ``args`` that wrappers around Leptonica objects are transformed
+    to the true Leptonica object. Errors are trapped. If the returned result is
+    a Leptonica object, it will be wrapped in a wrapper class. Otherwise it will
+    be returned directly. ``prepend`` is any arguments that should appear before
+    ``self`` when a method call is being built.
+    """
+
     if prepend:
         args = [*prepend, *args]
     c_args = [(arg._cdata if hasattr(arg, '_cdata') else arg) for arg in args]
@@ -249,10 +262,19 @@ def lept_call(fn, *args, prepend=None):
 
 
 def lept_method(self, fn, *args, prepend=None):
+    """Wrap a Leptonica when the caller is a class method.
+
+    The purpose of this is to ensure that ``self`` is added to the argument list.
+    """
     return lept_call(fn, self, *args, prepend=prepend)
 
 
 def make_binding(leptfn):
+    """Create a binding from a Python class to a Leptonica function.
+
+    For the most part this amounts to create a Python ``partial()`` that wraps
+    a call to ``lept_call``.
+    """
     typeof_fn = ffi.typeof(leptfn)
     expected_args = typeof_fn.args
 
@@ -275,6 +297,19 @@ def make_binding(leptfn):
 
 
 def bind(ctypedef, prefix, destroyer=''):
+    """Associate a Python class with Leptonica functions and types.
+
+    This is a class decorator.
+
+    Args:
+        ctypedef (str): The Leptonica C typedef that this class is associated with.
+            For example "PIX" in the case of PIX objects.
+        prefix (str): The function prefix that members of this class are associated
+            with. For example "pix" in the case of pix functions.
+        destroyer: The Leptonica C function that releases C memory for objects of
+            this type. If omitted, the destroyer is inferred from the prefix.
+    """
+
     def cls_wrapper(cls, ctypedef=ctypedef, prefix=prefix, destroyer=destroyer):
         typeof = ffi.typeof(f'{ctypedef} *')
         TYPEMAP[typeof] = cls
@@ -304,6 +339,17 @@ class LeptonicaObject:
     Leptonica objects are reference counted, and destroy decrements the
     refcount.
 
+    Leptonica uses referencing counting on its objects. Many Leptonica
+    functions return the original object with an increased reference count
+    if the operation had no effect (for example, pixDeskew if no skew was found).
+    This has complications for memory management in Python. Whenever Leptonica
+    returns an object (new or old), we wrap it in this class, which
+    registers it with the FFI garbage collector. pixDestroy() decrements the
+    reference count and only destroys when the last reference is removed.
+
+    Leptonica's reference counting is not threadsafe, but the GIL should protect
+    in most cases.
+
     Most of the time, when Leptonica returns something, we wrap and it the job
     is done. When wrapping objects that came from a Leptonica container, like
     a PIXA returning PIX, the subclass must clone the object before passing it
@@ -329,7 +375,7 @@ class LeptonicaObject:
 
     @classmethod
     def _destroy(cls, cdata):
-        """Destroy some cdata"""
+        """Destroy the cdata associated with this class"""
         # Leptonica API uses double-pointers for its destroy APIs to prevent
         # dangling pointers. This means we need to append a '*' to whatever
         # ctype this class is associated with, to create a double-pointer.
@@ -339,19 +385,7 @@ class LeptonicaObject:
 
 @bind('PIX', 'pix')
 class Pix(LeptonicaObject):
-    """
-    Wrapper around leptonica's PIX object.
-
-    Leptonica uses referencing counting on PIX objects. Also, many Leptonica
-    functions return the original object with an increased reference count
-    if the operation had no effect (for example, image skew was found to be 0).
-    This has complications for memory management in Python. Whenever Leptonica
-    returns a PIX object (new or old), we wrap it in this class, which
-    registers it with the FFI garbage collector. pixDestroy() decrements the
-    reference count and only destroys when the last reference is removed.
-
-    Leptonica's reference counting is not threadsafe. This class can be used
-    in a threadsafe manner if a Python threading.Lock protects the data.
+    """Wrapper around leptonica's PIX object.
 
     This class treats Pix objects as immutable.  All methods return new
     modified objects.  This allows convenient chaining:

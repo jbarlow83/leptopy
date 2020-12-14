@@ -68,8 +68,8 @@ setup(
     cffi_modules=['leptonica/leptonica_build.py:ffibuilder'],
     install_requires=[
         'cffi >= 1.9.1, < 2',  # must be a setup and install requirement
-        'pillow >= 5, < 6',
+        'pillow >= 7',
     ],
-    tests_require=['pytest >= 3, < 5'],
+    tests_require=['pytest >= 5, < 6'],
     project_urls={'Documentation': '', 'Source': '', 'Tracker': ''},
 )
