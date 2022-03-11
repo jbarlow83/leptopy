@@ -24,6 +24,8 @@ leptonica/*.so
 leptonica/*.dylib
 leptonica/_leptonica.py
 pip-wheel-metadata/
+leptonica/_leptonica.c
+leptonica/_leptonica.o
 
 # Code coverage
 .coverage*

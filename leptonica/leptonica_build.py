@@ -474,10 +474,9 @@ struct L_Dewarp
 typedef struct L_Dewarp L_DEWARP;
 
 /* 54 "alltypes.h" 2 */
-/* 1 "./gplot.h" 1 */
-/* 25 "./gplot.h" */
+#define  GPLOT_VERSION_NUMBER    1
 
-/* 42 "./gplot.h" */
+#define  NUM_GPLOT_STYLES  5
 enum GPLOT_STYLE {
     GPLOT_LINES       = 0,
     GPLOT_POINTS      = 1,
@@ -486,40 +485,46 @@ enum GPLOT_STYLE {
     GPLOT_DOTS        = 4
 };
 
+#define  NUM_GPLOT_OUTPUTS  6
 enum GPLOT_OUTPUT {
     GPLOT_NONE  = 0,
     GPLOT_PNG   = 1,
     GPLOT_PS    = 2,
     GPLOT_EPS   = 3,
-    GPLOT_LATEX = 4
+    GPLOT_LATEX = 4,
+    GPLOT_PNM   = 5,
 };
+
 enum GPLOT_SCALING {
-    GPLOT_LINEAR_SCALE  = 0,
+    GPLOT_LINEAR_SCALE  = 0,   /*!< default */
     GPLOT_LOG_SCALE_X   = 1,
     GPLOT_LOG_SCALE_Y   = 2,
     GPLOT_LOG_SCALE_X_Y = 3
 };
-extern const char  *gplotstylenames[];
-extern const char  *gplotfileoutputs[];
 
+extern const char  *gplotstylenames[];  /*!< used in gnuplot cmd file */
+extern const char  *gplotfileoutputs[]; /*!< used in simple file input */
+
+/*! Data structure for generating gnuplot files */
 struct GPlot
 {
-    char          *rootname;
-    char          *cmdname;
-    struct Sarray *cmddata;
-    struct Sarray *datanames;
-    struct Sarray *plotdata;
-    struct Sarray *plottitles;
-    struct Numa   *plotstyles;
-    l_int32        nplots;
-    char          *outname;
-    l_int32        outformat;
-    l_int32        scaling;
-    char          *title;
-    char          *xlabel;
-    char          *ylabel;
+    char          *rootname;   /*!< for cmd, data, output            */
+    char          *cmdname;    /*!< command file name                */
+    struct Sarray *cmddata;    /*!< command file contents            */
+    struct Sarray *datanames;  /*!< data file names                  */
+    struct Sarray *plotdata;   /*!< plot data (1 string/file)        */
+    struct Sarray *plotlabels; /*!< label for each individual plot   */
+    struct Numa   *plotstyles; /*!< plot style for individual plots  */
+    l_int32        nplots;     /*!< current number of plots          */
+    char          *outname;    /*!< output file name                 */
+    l_int32        outformat;  /*!< GPLOT_OUTPUT values              */
+    l_int32        scaling;    /*!< GPLOT_SCALING values             */
+    char          *title;      /*!< optional                         */
+    char          *xlabel;     /*!< optional x axis label            */
+    char          *ylabel;     /*!< optional y axis label            */
 };
 typedef struct GPlot  GPLOT;
+
 /* 55 "alltypes.h" 2 */
 /* 1 "./imageio.h" 1 */
 /* 25 "./imageio.h" */
@@ -1614,9 +1619,10 @@ ffibuilder.cdef(
  *====================================================================*/
 
 
-//#define LIBLEPT_MAJOR_VERSION   1
-//#define LIBLEPT_MINOR_VERSION   76
-//#define LIBLEPT_PATCH_VERSION   0
+// #define LIBLEPT_MAJOR_VERSION   1
+// #define LIBLEPT_MINOR_VERSION   79
+// #define LIBLEPT_PATCH_VERSION   0
+
 
 
 PIX * pixCleanBackgroundToWhite ( PIX *pixs, PIX *pixim, PIX *pixg, l_float32 gamma, l_int32 blackval, l_int32 whiteval );
@@ -1678,21 +1684,21 @@ l_ok l_productMatVec ( l_float32 *mat, l_float32 *vecs, l_float32 *vecd, l_int32
 l_ok l_productMat2 ( l_float32 *mat1, l_float32 *mat2, l_float32 *matd, l_int32 size );
 l_ok l_productMat3 ( l_float32 *mat1, l_float32 *mat2, l_float32 *mat3, l_float32 *matd, l_int32 size );
 l_ok l_productMat4 ( l_float32 *mat1, l_float32 *mat2, l_float32 *mat3, l_float32 *mat4, l_float32 *matd, l_int32 size );
-l_int32 l_getDataBit ( void *line, l_int32 n );
+l_int32 l_getDataBit ( const void *line, l_int32 n );
 void l_setDataBit ( void *line, l_int32 n );
 void l_clearDataBit ( void *line, l_int32 n );
 void l_setDataBitVal ( void *line, l_int32 n, l_int32 val );
-l_int32 l_getDataDibit ( void *line, l_int32 n );
+l_int32 l_getDataDibit ( const void *line, l_int32 n );
 void l_setDataDibit ( void *line, l_int32 n, l_int32 val );
 void l_clearDataDibit ( void *line, l_int32 n );
-l_int32 l_getDataQbit ( void *line, l_int32 n );
+l_int32 l_getDataQbit ( const void *line, l_int32 n );
 void l_setDataQbit ( void *line, l_int32 n, l_int32 val );
 void l_clearDataQbit ( void *line, l_int32 n );
-l_int32 l_getDataByte ( void *line, l_int32 n );
+l_int32 l_getDataByte ( const void *line, l_int32 n );
 void l_setDataByte ( void *line, l_int32 n, l_int32 val );
-l_int32 l_getDataTwoBytes ( void *line, l_int32 n );
+l_int32 l_getDataTwoBytes ( const void *line, l_int32 n );
 void l_setDataTwoBytes ( void *line, l_int32 n, l_int32 val );
-l_int32 l_getDataFourBytes ( void *line, l_int32 n );
+l_int32 l_getDataFourBytes ( const void *line, l_int32 n );
 void l_setDataFourBytes ( void *line, l_int32 n, l_int32 val );
 char * barcodeDispatchDecoder ( char *barstr, l_int32 format, l_int32 debugflag );
 l_int32 barcodeFormatIsSupported ( l_int32 format );
@@ -1731,9 +1737,8 @@ PIX * pixOtsuThreshOnBackgroundNorm ( PIX *pixs, PIX *pixim, l_int32 sx, l_int32
 PIX * pixMaskedThreshOnBackgroundNorm ( PIX *pixs, PIX *pixim, l_int32 sx, l_int32 sy, l_int32 thresh, l_int32 mincount, l_int32 smoothx, l_int32 smoothy, l_float32 scorefract, l_int32 *pthresh );
 l_ok pixSauvolaBinarizeTiled ( PIX *pixs, l_int32 whsize, l_float32 factor, l_int32 nx, l_int32 ny, PIX **ppixth, PIX **ppixd );
 l_ok pixSauvolaBinarize ( PIX *pixs, l_int32 whsize, l_float32 factor, l_int32 addborder, PIX **ppixm, PIX **ppixsd, PIX **ppixth, PIX **ppixd );
-PIX * pixSauvolaGetThreshold ( PIX *pixm, PIX *pixms, l_float32 factor, PIX **ppixsd );
-PIX * pixApplyLocalThreshold ( PIX *pixs, PIX *pixth, l_int32 redfactor );
 l_ok pixThresholdByConnComp ( PIX *pixs, PIX *pixm, l_int32 start, l_int32 end, l_int32 incr, l_float32 thresh48, l_float32 threshdiff, l_int32 *pglobthresh, PIX **ppixd, l_int32 debugflag );
+l_ok pixThresholdByHisto ( PIX *pixs, l_int32 factor, l_int32 halfw, l_float32 delta, l_int32 *pthresh, PIX **ppixd, PIX **ppixhisto );
 PIX * pixExpandBinaryReplicate ( PIX *pixs, l_int32 xfact, l_int32 yfact );
 PIX * pixExpandBinaryPower2 ( PIX *pixs, l_int32 factor );
 PIX * pixReduceBinary2 ( PIX *pixs, l_uint8 *intab );
@@ -1833,6 +1838,7 @@ BOXA * boxaReadMem ( const l_uint8 *data, size_t size );
 l_ok boxaWriteDebug ( const char *filename, BOXA *boxa );
 l_ok boxaWrite ( const char *filename, BOXA *boxa );
 l_ok boxaWriteStream ( FILE *fp, BOXA *boxa );
+l_ok boxaWriteStderr ( BOXA *boxa );
 l_ok boxaWriteMem ( l_uint8 **pdata, size_t *psize, BOXA *boxa );
 l_ok boxPrintStreamInfo ( FILE *fp, BOX *box );
 l_ok boxContains ( BOX *box1, BOX *box2, l_int32 *presult );
@@ -1850,6 +1856,7 @@ BOX * boxBoundingRegion ( BOX *box1, BOX *box2 );
 l_ok boxOverlapFraction ( BOX *box1, BOX *box2, l_float32 *pfract );
 l_ok boxOverlapArea ( BOX *box1, BOX *box2, l_int32 *parea );
 BOXA * boxaHandleOverlaps ( BOXA *boxas, l_int32 op, l_int32 range, l_float32 min_overlap, l_float32 max_ratio, NUMA **pnamap );
+l_ok boxOverlapDistance ( BOX *box1, BOX *box2, l_int32 *ph_ovl, l_int32 *pv_ovl );
 l_ok boxSeparationDistance ( BOX *box1, BOX *box2, l_int32 *ph_sep, l_int32 *pv_sep );
 l_ok boxCompareSize ( BOX *box1, BOX *box2, l_int32 type, l_int32 *prel );
 l_ok boxContainsPt ( BOX *box, l_float32 x, l_float32 y, l_int32 *pcontains );
@@ -1863,6 +1870,7 @@ BOX * boxClipToRectangle ( BOX *box, l_int32 wi, l_int32 hi );
 l_ok boxClipToRectangleParams ( BOX *box, l_int32 w, l_int32 h, l_int32 *pxstart, l_int32 *pystart, l_int32 *pxend, l_int32 *pyend, l_int32 *pbw, l_int32 *pbh );
 BOX * boxRelocateOneSide ( BOX *boxd, BOX *boxs, l_int32 loc, l_int32 sideflag );
 BOXA * boxaAdjustSides ( BOXA *boxas, l_int32 delleft, l_int32 delright, l_int32 deltop, l_int32 delbot );
+l_ok boxaAdjustBoxSides ( BOXA *boxa, l_int32 index, l_int32 delleft, l_int32 delright, l_int32 deltop, l_int32 delbot );
 BOX * boxAdjustSides ( BOX *boxd, BOX *boxs, l_int32 delleft, l_int32 delright, l_int32 deltop, l_int32 delbot );
 BOXA * boxaSetSide ( BOXA *boxad, BOXA *boxas, l_int32 side, l_int32 val, l_int32 thresh );
 l_ok boxSetSide ( BOX *boxs, l_int32 side, l_int32 val, l_int32 thresh );
@@ -1882,6 +1890,7 @@ BOXA * boxaTransformOrdered ( BOXA *boxas, l_int32 shiftx, l_int32 shifty, l_flo
 BOX * boxTransformOrdered ( BOX *boxs, l_int32 shiftx, l_int32 shifty, l_float32 scalex, l_float32 scaley, l_int32 xcen, l_int32 ycen, l_float32 angle, l_int32 order );
 BOXA * boxaRotateOrth ( BOXA *boxas, l_int32 w, l_int32 h, l_int32 rotation );
 BOX * boxRotateOrth ( BOX *box, l_int32 w, l_int32 h, l_int32 rotation );
+BOXA * boxaShiftWithPta ( BOXA *boxas, PTA *pta, l_int32 dir );
 BOXA * boxaSort ( BOXA *boxas, l_int32 sorttype, l_int32 sortorder, NUMA **pnaindex );
 BOXA * boxaBinSort ( BOXA *boxas, l_int32 sorttype, l_int32 sortorder, NUMA **pnaindex );
 BOXA * boxaSortByIndex ( BOXA *boxas, NUMA *naindex );
@@ -1889,6 +1898,7 @@ BOXAA * boxaSort2d ( BOXA *boxas, NUMAA **pnaad, l_int32 delta1, l_int32 delta2,
 BOXAA * boxaSort2dByIndex ( BOXA *boxas, NUMAA *naa );
 l_ok boxaExtractAsNuma ( BOXA *boxa, NUMA **pnal, NUMA **pnat, NUMA **pnar, NUMA **pnab, NUMA **pnaw, NUMA **pnah, l_int32 keepinvalid );
 l_ok boxaExtractAsPta ( BOXA *boxa, PTA **pptal, PTA **pptat, PTA **pptar, PTA **pptab, PTA **pptaw, PTA **pptah, l_int32 keepinvalid );
+PTA * boxaExtractCorners ( BOXA *boxa, l_int32 loc );
 l_ok boxaGetRankVals ( BOXA *boxa, l_float32 fract, l_int32 *px, l_int32 *py, l_int32 *pr, l_int32 *pb, l_int32 *pw, l_int32 *ph );
 l_ok boxaGetMedianVals ( BOXA *boxa, l_int32 *px, l_int32 *py, l_int32 *pr, l_int32 *pb, l_int32 *pw, l_int32 *ph );
 l_ok boxaGetAverageSize ( BOXA *boxa, l_float32 *pw, l_float32 *ph );
@@ -1938,9 +1948,7 @@ l_ok boxaLocationRange ( BOXA *boxa, l_int32 *pminx, l_int32 *pminy, l_int32 *pm
 l_ok boxaGetSizes ( BOXA *boxa, NUMA **pnaw, NUMA **pnah );
 l_ok boxaGetArea ( BOXA *boxa, l_int32 *parea );
 PIX * boxaDisplayTiled ( BOXA *boxas, PIXA *pixa, l_int32 first, l_int32 last, l_int32 maxwidth, l_int32 linewidth, l_float32 scalefactor, l_int32 background, l_int32 spacing, l_int32 border );
-BOXA * boxaSmoothSequenceLS ( BOXA *boxas, l_float32 factor, l_int32 subflag, l_int32 maxdiff, l_int32 extrapixels, l_int32 debug );
 BOXA * boxaSmoothSequenceMedian ( BOXA *boxas, l_int32 halfwin, l_int32 subflag, l_int32 maxdiff, l_int32 extrapixels, l_int32 debug );
-BOXA * boxaLinearFit ( BOXA *boxas, l_float32 factor, l_int32 debug );
 BOXA * boxaWindowedMedian ( BOXA *boxas, l_int32 halfwin, l_int32 debug );
 BOXA * boxaModifyWithBoxa ( BOXA *boxas, BOXA *boxam, l_int32 subflag, l_int32 maxdiff, l_int32 extrapixels );
 BOXA * boxaConstrainSize ( BOXA *boxas, l_int32 width, l_int32 widthflag, l_int32 height, l_int32 heightflag );
@@ -1948,7 +1956,9 @@ BOXA * boxaReconcileEvenOddHeight ( BOXA *boxas, l_int32 sides, l_int32 delh, l_
 BOXA * boxaReconcilePairWidth ( BOXA *boxas, l_int32 delw, l_int32 op, l_float32 factor, NUMA *na );
 l_ok boxaSizeConsistency1 ( BOXA *boxas, l_int32 type, l_float32 threshp, l_float32 threshm, l_float32 *pfvarp, l_float32 *pfvarm, l_int32 *psame );
 l_ok boxaSizeConsistency2 ( BOXA *boxas, l_float32 *pfdevw, l_float32 *pfdevh, l_int32 debug );
-BOXA * boxaReconcileSizeByMedian ( BOXA *boxas, l_int32 type, l_float32 fract, l_float32 factor, NUMA **pnadelw, NUMA **pnadelh, l_float32 *pratiowh );
+BOXA * boxaReconcileAllByMedian ( BOXA *boxas, l_int32 select1, l_int32 select2, l_int32 thresh, l_int32 extra, PIXA *pixadb );
+BOXA * boxaReconcileSidesByMedian ( BOXA *boxas, l_int32 select, l_int32 thresh, l_int32 extra, PIXA *pixadb );
+BOXA * boxaReconcileSizeByMedian ( BOXA *boxas, l_int32 type, l_float32 dfract, l_float32 sfract, l_float32 factor, NUMA **pnadelw, NUMA **pnadelh, l_float32 *pratiowh );
 l_ok boxaPlotSides ( BOXA *boxa, const char *plotname, NUMA **pnal, NUMA **pnat, NUMA **pnar, NUMA **pnab, PIX **ppixd );
 l_ok boxaPlotSizes ( BOXA *boxa, const char *plotname, NUMA **pnaw, NUMA **pnah, PIX **ppixd );
 BOXA * boxaFillSequence ( BOXA *boxas, l_int32 useflag, l_int32 debug );
@@ -1978,13 +1988,8 @@ l_ok ccbaAddCcb ( CCBORDA *ccba, CCBORD *ccb );
 l_int32 ccbaGetCount ( CCBORDA *ccba );
 CCBORD * ccbaGetCcb ( CCBORDA *ccba, l_int32 index );
 CCBORDA * pixGetAllCCBorders ( PIX *pixs );
-CCBORD * pixGetCCBorders ( PIX *pixs, BOX *box );
 PTAA * pixGetOuterBordersPtaa ( PIX *pixs );
-PTA * pixGetOuterBorderPta ( PIX *pixs, BOX *box );
 l_ok pixGetOuterBorder ( CCBORD *ccb, PIX *pixs, BOX *box );
-l_ok pixGetHoleBorder ( CCBORD *ccb, PIX *pixs, BOX *box, l_int32 xs, l_int32 ys );
-l_int32 findNextBorderPixel ( l_int32 w, l_int32 h, l_uint32 *data, l_int32 wpl, l_int32 px, l_int32 py, l_int32 *pqpos, l_int32 *pnpx, l_int32 *pnpy );
-void locateOutsideSeedPixel ( l_int32 fpx, l_int32 fpy, l_int32 spx, l_int32 spy, l_int32 *pxs, l_int32 *pys );
 l_ok ccbaGenerateGlobalLocs ( CCBORDA *ccba );
 l_ok ccbaGenerateStepChains ( CCBORDA *ccba );
 l_ok ccbaStepChainsToPixCoords ( CCBORDA *ccba, l_int32 coordtype );
@@ -2005,6 +2010,8 @@ PIXA * pixaThinConnected ( PIXA *pixas, l_int32 type, l_int32 connectivity, l_in
 PIX * pixThinConnected ( PIX *pixs, l_int32 type, l_int32 connectivity, l_int32 maxiters );
 PIX * pixThinConnectedBySet ( PIX *pixs, l_int32 type, SELA *sela, l_int32 maxiters );
 SELA * selaMakeThinSets ( l_int32 index, l_int32 debug );
+l_ok pixFindCheckerboardCorners ( PIX *pixs, l_int32 size, l_int32 dilation, l_int32 nsels, PIX **ppix_corners, PTA **ppta_corners, PIXA *pixadb );
+SELA * makeCheckerboardCornerSela ( l_int32 size, l_int32 dilation, l_int32 nsels, PIXA *pixadb );
 l_ok jbCorrelation ( const char *dirin, l_float32 thresh, l_float32 weight, l_int32 components, const char *rootname, l_int32 firstpage, l_int32 npages, l_int32 renderflag );
 l_ok jbRankHaus ( const char *dirin, l_int32 size, l_float32 rank, l_int32 components, const char *rootname, l_int32 firstpage, l_int32 npages, l_int32 renderflag );
 JBCLASSER * jbWordsInTextlines ( const char *dirin, l_int32 reduction, l_int32 maxwidth, l_int32 maxheight, l_float32 thresh, l_float32 weight, NUMA **pnatl, l_int32 firstpage, l_int32 npages );
@@ -2013,15 +2020,17 @@ l_ok pixGetWordBoxesInTextlines ( PIX *pixs, l_int32 minwidth, l_int32 minheight
 l_ok pixFindWordAndCharacterBoxes ( PIX *pixs, BOX *boxs, l_int32 thresh, BOXA **pboxaw, BOXAA **pboxaac, const char *debugdir );
 NUMAA * boxaExtractSortedPattern ( BOXA *boxa, NUMA *na );
 l_ok numaaCompareImagesByBoxes ( NUMAA *naa1, NUMAA *naa2, l_int32 nperline, l_int32 nreq, l_int32 maxshiftx, l_int32 maxshifty, l_int32 delx, l_int32 dely, l_int32 *psame, l_int32 debugflag );
-l_ok pixColorContent ( PIX *pixs, l_int32 rwhite, l_int32 gwhite, l_int32 bwhite, l_int32 mingray, PIX **ppixr, PIX **ppixg, PIX **ppixb );
-PIX * pixColorMagnitude ( PIX *pixs, l_int32 rwhite, l_int32 gwhite, l_int32 bwhite, l_int32 type );
+l_ok pixColorContent ( PIX *pixs, l_int32 rref, l_int32 gref, l_int32 bref, l_int32 mingray, PIX **ppixr, PIX **ppixg, PIX **ppixb );
+PIX * pixColorMagnitude ( PIX *pixs, l_int32 rref, l_int32 gref, l_int32 bref, l_int32 type );
 PIX * pixMaskOverColorPixels ( PIX *pixs, l_int32 threshdiff, l_int32 mindist );
+PIX * pixMaskOverGrayPixels ( PIX *pixs, l_int32 maxlimit, l_int32 satlimit );
 PIX * pixMaskOverColorRange ( PIX *pixs, l_int32 rmin, l_int32 rmax, l_int32 gmin, l_int32 gmax, l_int32 bmin, l_int32 bmax );
 l_ok pixColorFraction ( PIX *pixs, l_int32 darkthresh, l_int32 lightthresh, l_int32 diffthresh, l_int32 factor, l_float32 *ppixfract, l_float32 *pcolorfract );
 l_ok pixFindColorRegions ( PIX *pixs, PIX *pixm, l_int32 factor, l_int32 lightthresh, l_int32 darkthresh, l_int32 mindiff, l_int32 colordiff, l_float32 edgefract, l_float32 *pcolorfract, PIX **pcolormask1, PIX **pcolormask2, PIXA *pixadb );
 l_ok pixNumSignificantGrayColors ( PIX *pixs, l_int32 darkthresh, l_int32 lightthresh, l_float32 minfract, l_int32 factor, l_int32 *pncolors );
 l_ok pixColorsForQuantization ( PIX *pixs, l_int32 thresh, l_int32 *pncolors, l_int32 *piscolor, l_int32 debug );
 l_ok pixNumColors ( PIX *pixs, l_int32 factor, l_int32 *pncolors );
+PIX * pixConvertRGBToCmap ( PIX *pixs );
 l_ok pixGetMostPopulatedColors ( PIX *pixs, l_int32 sigbits, l_int32 factor, l_int32 ncolors, l_uint32 **parray, PIXCMAP **pcmap );
 PIX * pixSimpleColorQuantize ( PIX *pixs, l_int32 sigbits, l_int32 factor, l_int32 ncolors );
 NUMA * pixGetRGBHistogram ( PIX *pixs, l_int32 sigbits, l_int32 factor );
@@ -2041,9 +2050,9 @@ l_ok pixelFractionalShift ( l_int32 rval, l_int32 gval, l_int32 bval, l_float32 
 PIXCMAP * pixcmapCreate ( l_int32 depth );
 PIXCMAP * pixcmapCreateRandom ( l_int32 depth, l_int32 hasblack, l_int32 haswhite );
 PIXCMAP * pixcmapCreateLinear ( l_int32 d, l_int32 nlevels );
-PIXCMAP * pixcmapCopy ( PIXCMAP *cmaps );
+PIXCMAP * pixcmapCopy ( const PIXCMAP *cmaps );
 void pixcmapDestroy ( PIXCMAP **pcmap );
-l_ok pixcmapIsValid ( PIXCMAP *cmap, l_int32 *pvalid );
+l_ok pixcmapIsValid ( const PIXCMAP *cmap, l_int32 *pvalid );
 l_ok pixcmapAddColor ( PIXCMAP *cmap, l_int32 rval, l_int32 gval, l_int32 bval );
 l_ok pixcmapAddRGBA ( PIXCMAP *cmap, l_int32 rval, l_int32 gval, l_int32 bval, l_int32 aval );
 l_ok pixcmapAddNewColor ( PIXCMAP *cmap, l_int32 rval, l_int32 gval, l_int32 bval, l_int32 *pindex );
@@ -2051,7 +2060,7 @@ l_ok pixcmapAddNearestColor ( PIXCMAP *cmap, l_int32 rval, l_int32 gval, l_int32
 l_ok pixcmapUsableColor ( PIXCMAP *cmap, l_int32 rval, l_int32 gval, l_int32 bval, l_int32 *pusable );
 l_ok pixcmapAddBlackOrWhite ( PIXCMAP *cmap, l_int32 color, l_int32 *pindex );
 l_ok pixcmapSetBlackAndWhite ( PIXCMAP *cmap, l_int32 setblack, l_int32 setwhite );
-l_int32 pixcmapGetCount ( PIXCMAP *cmap );
+l_int32 pixcmapGetCount ( const PIXCMAP *cmap );
 l_int32 pixcmapGetFreeCount ( PIXCMAP *cmap );
 l_int32 pixcmapGetDepth ( PIXCMAP *cmap );
 l_ok pixcmapGetMinDepth ( PIXCMAP *cmap, l_int32 *pmindepth );
@@ -2079,10 +2088,10 @@ PIXCMAP * pixcmapConvertTo8 ( PIXCMAP *cmaps );
 PIXCMAP * pixcmapRead ( const char *filename );
 PIXCMAP * pixcmapReadStream ( FILE *fp );
 PIXCMAP * pixcmapReadMem ( const l_uint8 *data, size_t size );
-l_ok pixcmapWrite ( const char *filename, PIXCMAP *cmap );
-l_ok pixcmapWriteStream ( FILE *fp, PIXCMAP *cmap );
-l_ok pixcmapWriteMem ( l_uint8 **pdata, size_t *psize, PIXCMAP *cmap );
-l_ok pixcmapToArrays ( PIXCMAP *cmap, l_int32 **prmap, l_int32 **pgmap, l_int32 **pbmap, l_int32 **pamap );
+l_ok pixcmapWrite ( const char *filename, const PIXCMAP *cmap );
+l_ok pixcmapWriteStream ( FILE *fp, const PIXCMAP *cmap );
+l_ok pixcmapWriteMem ( l_uint8 **pdata, size_t *psize, const PIXCMAP *cmap );
+l_ok pixcmapToArrays ( const PIXCMAP *cmap, l_int32 **prmap, l_int32 **pgmap, l_int32 **pbmap, l_int32 **pamap );
 l_ok pixcmapToRGBTable ( PIXCMAP *cmap, l_uint32 **ptab, l_int32 *pncolors );
 l_ok pixcmapSerializeToMemory ( PIXCMAP *cmap, l_int32 cpc, l_int32 *pncolors, l_uint8 **pdata );
 PIXCMAP * pixcmapDeserializeFromMemory ( l_uint8 *data, l_int32 cpc, l_int32 ncolors );
@@ -2094,7 +2103,7 @@ l_ok pixcmapShiftByComponent ( PIXCMAP *cmap, l_uint32 srcval, l_uint32 dstval )
 PIX * pixColorMorph ( PIX *pixs, l_int32 type, l_int32 hsize, l_int32 vsize );
 PIX * pixOctreeColorQuant ( PIX *pixs, l_int32 colors, l_int32 ditherflag );
 PIX * pixOctreeColorQuantGeneral ( PIX *pixs, l_int32 colors, l_int32 ditherflag, l_float32 validthresh, l_float32 colorthresh );
-l_ok makeRGBToIndexTables ( l_uint32 **prtab, l_uint32 **pgtab, l_uint32 **pbtab, l_int32 cqlevels );
+l_ok makeRGBToIndexTables ( l_int32 cqlevels, l_uint32 **prtab, l_uint32 **pgtab, l_uint32 **pbtab );
 void getOctcubeIndexFromRGB ( l_int32 rval, l_int32 gval, l_int32 bval, l_uint32 *rtab, l_uint32 *gtab, l_uint32 *btab, l_uint32 *pindex );
 PIX * pixOctreeQuantByPopulation ( PIX *pixs, l_int32 level, l_int32 ditherflag );
 PIX * pixOctreeQuantNumColors ( PIX *pixs, l_int32 maxcolors, l_int32 subsample );
@@ -2173,14 +2182,14 @@ l_ok pixGetDifferenceStats ( PIX *pix1, PIX *pix2, l_int32 factor, l_int32 mindi
 NUMA * pixGetDifferenceHistogram ( PIX *pix1, PIX *pix2, l_int32 factor );
 l_ok pixGetPerceptualDiff ( PIX *pixs1, PIX *pixs2, l_int32 sampling, l_int32 dilation, l_int32 mindiff, l_float32 *pfract, PIX **ppixdiff1, PIX **ppixdiff2 );
 l_ok pixGetPSNR ( PIX *pix1, PIX *pix2, l_int32 factor, l_float32 *ppsnr );
-l_ok pixaComparePhotoRegionsByHisto ( PIXA *pixa, l_float32 minratio, l_float32 textthresh, l_int32 factor, l_int32 nx, l_int32 ny, l_float32 simthresh, NUMA **pnai, l_float32 **pscores, PIX **ppixd, l_int32 debug );
-l_ok pixComparePhotoRegionsByHisto ( PIX *pix1, PIX *pix2, BOX *box1, BOX *box2, l_float32 minratio, l_int32 factor, l_int32 nx, l_int32 ny, l_float32 *pscore, l_int32 debugflag );
-l_ok pixGenPhotoHistos ( PIX *pixs, BOX *box, l_int32 factor, l_float32 thresh, l_int32 nx, l_int32 ny, NUMAA **pnaa, l_int32 *pw, l_int32 *ph, l_int32 debugindex );
+l_ok pixaComparePhotoRegionsByHisto ( PIXA *pixa, l_float32 minratio, l_float32 textthresh, l_int32 factor, l_int32 n, l_float32 simthresh, NUMA **pnai, l_float32 **pscores, PIX **ppixd, l_int32 debug );
+l_ok pixComparePhotoRegionsByHisto ( PIX *pix1, PIX *pix2, BOX *box1, BOX *box2, l_float32 minratio, l_int32 factor, l_int32 n, l_float32 *pscore, l_int32 debugflag );
+l_ok pixGenPhotoHistos ( PIX *pixs, BOX *box, l_int32 factor, l_float32 thresh, l_int32 n, NUMAA **pnaa, l_int32 *pw, l_int32 *ph, l_int32 debugindex );
 PIX * pixPadToCenterCentroid ( PIX *pixs, l_int32 factor );
 l_ok pixCentroid8 ( PIX *pixs, l_int32 factor, l_float32 *pcx, l_float32 *pcy );
-l_ok pixDecideIfPhotoImage ( PIX *pix, l_int32 factor, l_int32 nx, l_int32 ny, l_float32 thresh, NUMAA **pnaa, PIXA *pixadebug );
+l_ok pixDecideIfPhotoImage ( PIX *pix, l_int32 factor, l_float32 thresh, l_int32 n, NUMAA **pnaa, PIXA *pixadebug );
 l_ok compareTilesByHisto ( NUMAA *naa1, NUMAA *naa2, l_float32 minratio, l_int32 w1, l_int32 h1, l_int32 w2, l_int32 h2, l_float32 *pscore, PIXA *pixadebug );
-l_ok pixCompareGrayByHisto ( PIX *pix1, PIX *pix2, BOX *box1, BOX *box2, l_float32 minratio, l_int32 maxgray, l_int32 factor, l_int32 nx, l_int32 ny, l_float32 *pscore, l_int32 debugflag );
+l_ok pixCompareGrayByHisto ( PIX *pix1, PIX *pix2, BOX *box1, BOX *box2, l_float32 minratio, l_int32 maxgray, l_int32 factor, l_int32 n, l_float32 *pscore, l_int32 debugflag );
 l_ok pixCropAlignedToCentroid ( PIX *pix1, PIX *pix2, l_int32 factor, BOX **pbox1, BOX **pbox2 );
 l_uint8 * l_compressGrayHistograms ( NUMAA *naa, l_int32 w, l_int32 h, size_t *psize );
 NUMAA * l_uncompressGrayHistograms ( l_uint8 *bytea, size_t size, l_int32 *pw, l_int32 *ph );
@@ -2221,7 +2230,7 @@ FPIX * fpixConvolveSep ( FPIX *fpixs, L_KERNEL *kelx, L_KERNEL *kely, l_int32 no
 PIX * pixConvolveWithBias ( PIX *pixs, L_KERNEL *kel1, L_KERNEL *kel2, l_int32 force8, l_int32 *pbias );
 void l_setConvolveSampling ( l_int32 xfact, l_int32 yfact );
 PIX * pixAddGaussianNoise ( PIX *pixs, l_float32 stdev );
-l_float32 gaussDistribSampling (  );
+l_float32 gaussDistribSampling ( void );
 l_ok pixCorrelationScore ( PIX *pix1, PIX *pix2, l_int32 area1, l_int32 area2, l_float32 delx, l_float32 dely, l_int32 maxdiffw, l_int32 maxdiffh, l_int32 *tab, l_float32 *pscore );
 l_int32 pixCorrelationScoreThresholded ( PIX *pix1, PIX *pix2, l_int32 area1, l_int32 area2, l_float32 delx, l_float32 dely, l_int32 maxdiffw, l_int32 maxdiffh, l_int32 *tab, l_int32 *downcount, l_float32 score_threshold );
 l_ok pixCorrelationScoreSimple ( PIX *pix1, PIX *pix2, l_int32 area1, l_int32 area2, l_float32 delx, l_float32 dely, l_int32 maxdiffw, l_int32 maxdiffh, l_int32 *tab, l_float32 *pscore );
@@ -2348,13 +2357,13 @@ PIX * pixSobelEdgeFilter ( PIX *pixs, l_int32 orientflag );
 PIX * pixTwoSidedEdgeFilter ( PIX *pixs, l_int32 orientflag );
 l_ok pixMeasureEdgeSmoothness ( PIX *pixs, l_int32 side, l_int32 minjump, l_int32 minreversal, l_float32 *pjpl, l_float32 *pjspl, l_float32 *prpl, const char *debugfile );
 NUMA * pixGetEdgeProfile ( PIX *pixs, l_int32 side, const char *debugfile );
-l_int32 pixGetLastOffPixelInRun ( PIX *pixs, l_int32 x, l_int32 y, l_int32 direction, l_int32 *ploc );
+l_ok pixGetLastOffPixelInRun ( PIX *pixs, l_int32 x, l_int32 y, l_int32 direction, l_int32 *ploc );
 l_int32 pixGetLastOnPixelInRun ( PIX *pixs, l_int32 x, l_int32 y, l_int32 direction, l_int32 *ploc );
-char * encodeBase64 ( l_uint8 *inarray, l_int32 insize, l_int32 *poutsize );
+char * encodeBase64 ( const l_uint8 *inarray, l_int32 insize, l_int32 *poutsize );
 l_uint8 * decodeBase64 ( const char *inarray, l_int32 insize, l_int32 *poutsize );
-char * encodeAscii85 ( l_uint8 *inarray, l_int32 insize, l_int32 *poutsize );
-l_uint8 * decodeAscii85 ( char *inarray, l_int32 insize, l_int32 *poutsize );
-char * reformatPacked64 ( char *inarray, l_int32 insize, l_int32 leadspace, l_int32 linechars, l_int32 addquotes, l_int32 *poutsize );
+char * encodeAscii85 ( const l_uint8 *inarray, l_int32 insize, l_int32 *poutsize );
+l_uint8 * decodeAscii85 ( const char *inarray, l_int32 insize, l_int32 *poutsize );
+char * reformatPacked64 ( const char *inarray, l_int32 insize, l_int32 leadspace, l_int32 linechars, l_int32 addquotes, l_int32 *poutsize );
 PIX * pixGammaTRC ( PIX *pixd, PIX *pixs, l_float32 gamma, l_int32 minval, l_int32 maxval );
 PIX * pixGammaTRCMasked ( PIX *pixd, PIX *pixs, PIX *pixm, l_float32 gamma, l_int32 minval, l_int32 maxval );
 PIX * pixGammaTRCWithAlpha ( PIX *pixd, PIX *pixs, l_float32 gamma, l_int32 minval, l_int32 maxval );
@@ -2365,6 +2374,7 @@ NUMA * numaContrastTRC ( l_float32 factor );
 PIX * pixEqualizeTRC ( PIX *pixd, PIX *pixs, l_float32 fract, l_int32 factor );
 NUMA * numaEqualizeTRC ( PIX *pix, l_float32 fract, l_int32 factor );
 l_int32 pixTRCMap ( PIX *pixs, PIX *pixm, NUMA *na );
+l_int32 pixTRCMapGeneral ( PIX *pixs, PIX *pixm, NUMA *nar, NUMA *nag, NUMA *nab );
 PIX * pixUnsharpMasking ( PIX *pixs, l_int32 halfwidth, l_float32 fract );
 PIX * pixUnsharpMaskingGray ( PIX *pixs, l_int32 halfwidth, l_float32 fract );
 PIX * pixUnsharpMaskingFast ( PIX *pixs, l_int32 halfwidth, l_float32 fract, l_int32 direction );
@@ -2512,17 +2522,24 @@ l_ok pixWriteStreamGif ( FILE *fp, PIX *pix );
 l_ok pixWriteMemGif ( l_uint8 **pdata, size_t *psize, PIX *pix );
 GPLOT * gplotCreate ( const char *rootname, l_int32 outformat, const char *title, const char *xlabel, const char *ylabel );
 void gplotDestroy ( GPLOT **pgplot );
-l_ok gplotAddPlot ( GPLOT *gplot, NUMA *nax, NUMA *nay, l_int32 plotstyle, const char *plottitle );
+l_ok gplotAddPlot ( GPLOT *gplot, NUMA *nax, NUMA *nay, l_int32 plotstyle, const char *plotlabel );
 l_ok gplotSetScaling ( GPLOT *gplot, l_int32 scaling );
+PIX * gplotMakeOutputPix ( GPLOT *gplot );
 l_ok gplotMakeOutput ( GPLOT *gplot );
 l_ok gplotGenCommandFile ( GPLOT *gplot );
 l_ok gplotGenDataFiles ( GPLOT *gplot );
 l_ok gplotSimple1 ( NUMA *na, l_int32 outformat, const char *outroot, const char *title );
 l_ok gplotSimple2 ( NUMA *na1, NUMA *na2, l_int32 outformat, const char *outroot, const char *title );
 l_ok gplotSimpleN ( NUMAA *naa, l_int32 outformat, const char *outroot, const char *title );
-l_ok gplotSimpleXY1 ( NUMA *nax, NUMA *nay, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
-l_ok gplotSimpleXY2 ( NUMA *nax, NUMA *nay1, NUMA *nay2, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
-l_ok gplotSimpleXYN ( NUMA *nax, NUMAA *naay, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
+PIX * gplotSimplePix1 ( NUMA *na, const char *title );
+PIX * gplotSimplePix2 ( NUMA *na1, NUMA *na2, const char *title );
+PIX * gplotSimplePixN ( NUMAA *naa, const char *title );
+GPLOT * gplotSimpleXY1 ( NUMA *nax, NUMA *nay, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
+GPLOT * gplotSimpleXY2 ( NUMA *nax, NUMA *nay1, NUMA *nay2, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
+GPLOT * gplotSimpleXYN ( NUMA *nax, NUMAA *naay, l_int32 plotstyle, l_int32 outformat, const char *outroot, const char *title );
+PIX * gplotGeneralPix1 ( NUMA *na, l_int32 plotstyle, const char *rootname, const char *title, const char *xlabel, const char *ylabel );
+PIX * gplotGeneralPix2 ( NUMA *na1, NUMA *na2, l_int32 plotstyle, const char *rootname, const char *title, const char *xlabel, const char *ylabel );
+PIX * gplotGeneralPixN ( NUMA *nax, NUMAA *naay, l_int32 plotstyle, const char *rootname, const char *title, const char *xlabel, const char *ylabel );
 GPLOT * gplotRead ( const char *filename );
 l_ok gplotWrite ( const char *filename, GPLOT *gplot );
 PTA * generatePtaLine ( l_int32 x1, l_int32 y1, l_int32 x2, l_int32 y2 );
@@ -2604,13 +2621,12 @@ PIX * pixGenerateMaskByBand32 ( PIX *pixs, l_uint32 refval, l_int32 delm, l_int3
 PIX * pixGenerateMaskByDiscr32 ( PIX *pixs, l_uint32 refval1, l_uint32 refval2, l_int32 distflag );
 PIX * pixGrayQuantFromHisto ( PIX *pixd, PIX *pixs, PIX *pixm, l_float32 minfract, l_int32 maxsize );
 PIX * pixGrayQuantFromCmap ( PIX *pixs, PIXCMAP *cmap, l_int32 mindepth );
-L_HEAP * lheapCreate ( l_int32 nalloc, l_int32 direction );
+L_HEAP * lheapCreate ( l_int32 n, l_int32 direction );
 void lheapDestroy ( L_HEAP **plh, l_int32 freeflag );
 l_ok lheapAdd ( L_HEAP *lh, void *item );
 void * lheapRemove ( L_HEAP *lh );
 l_int32 lheapGetCount ( L_HEAP *lh );
-l_ok lheapSwapUp ( L_HEAP *lh, l_int32 index );
-l_ok lheapSwapDown ( L_HEAP *lh );
+void * lheapGetElement ( L_HEAP *lh, l_int32 index );
 l_ok lheapSort ( L_HEAP *lh );
 l_ok lheapSortStrictOrder ( L_HEAP *lh );
 l_ok lheapPrint ( FILE *fp, L_HEAP *lh );
@@ -2683,10 +2699,10 @@ L_KERNEL * kernelCreateFromPix ( PIX *pix, l_int32 cy, l_int32 cx );
 PIX * kernelDisplayInPix ( L_KERNEL *kel, l_int32 size, l_int32 gthick );
 NUMA * parseStringForNumbers ( const char *str, const char *seps );
 L_KERNEL * makeFlatKernel ( l_int32 height, l_int32 width, l_int32 cy, l_int32 cx );
-L_KERNEL * makeGaussianKernel ( l_int32 halfheight, l_int32 halfwidth, l_float32 stdev, l_float32 max );
-l_ok makeGaussianKernelSep ( l_int32 halfheight, l_int32 halfwidth, l_float32 stdev, l_float32 max, L_KERNEL **pkelx, L_KERNEL **pkely );
-L_KERNEL * makeDoGKernel ( l_int32 halfheight, l_int32 halfwidth, l_float32 stdev, l_float32 ratio );
-char * getImagelibVersions (  );
+L_KERNEL * makeGaussianKernel ( l_int32 halfh, l_int32 halfw, l_float32 stdev, l_float32 max );
+l_ok makeGaussianKernelSep ( l_int32 halfh, l_int32 halfw, l_float32 stdev, l_float32 max, L_KERNEL **pkelx, L_KERNEL **pkely );
+L_KERNEL * makeDoGKernel ( l_int32 halfh, l_int32 halfw, l_float32 stdev, l_float32 ratio );
+char * getImagelibVersions ( void );
 void listDestroy ( DLLIST **phead );
 l_ok listAddToHead ( DLLIST **phead, void *data );
 l_ok listAddToTail ( DLLIST **phead, DLLIST **ptail, void *data );
@@ -2818,6 +2834,7 @@ NUMA * numaReadMem ( const l_uint8 *data, size_t size );
 l_ok numaWriteDebug ( const char *filename, NUMA *na );
 l_ok numaWrite ( const char *filename, NUMA *na );
 l_ok numaWriteStream ( FILE *fp, NUMA *na );
+l_ok numaWriteStderr ( NUMA *na );
 l_ok numaWriteMem ( l_uint8 **pdata, size_t *psize, NUMA *na );
 NUMAA * numaaCreate ( l_int32 n );
 NUMAA * numaaCreateFull ( l_int32 nptr, l_int32 n );
@@ -2929,6 +2946,7 @@ l_ok numaEarthMoverDistance ( NUMA *na1, NUMA *na2, l_float32 *pdist );
 l_ok grayInterHistogramStats ( NUMAA *naa, l_int32 wc, NUMA **pnam, NUMA **pnams, NUMA **pnav, NUMA **pnarv );
 NUMA * numaFindPeaks ( NUMA *nas, l_int32 nmax, l_float32 fract1, l_float32 fract2 );
 NUMA * numaFindExtrema ( NUMA *nas, l_float32 delta, NUMA **pnav );
+l_ok numaFindLocForThreshold ( NUMA *na, l_int32 skip, l_int32 *pthresh, l_float32 *pfract );
 l_ok numaCountReversals ( NUMA *nas, l_float32 minreversal, l_int32 *pnr, l_float32 *prd );
 l_ok numaSelectCrossingThreshold ( NUMA *nax, NUMA *nay, l_float32 estthresh, l_float32 *pbestthresh );
 NUMA * numaCrossingsByThreshold ( NUMA *nax, NUMA *nay, l_float32 thresh );
@@ -2954,6 +2972,8 @@ PIX * pixPrepare1bpp ( PIX *pixs, BOX *box, l_float32 cropfract, l_int32 outres 
 l_ok pixEstimateBackground ( PIX *pixs, l_int32 darkthresh, l_float32 edgecrop, l_int32 *pbg );
 l_ok pixFindLargeRectangles ( PIX *pixs, l_int32 polarity, l_int32 nrect, BOXA **pboxa, PIX **ppixdb );
 l_ok pixFindLargestRectangle ( PIX *pixs, l_int32 polarity, BOX **pbox, PIX **ppixdb );
+BOX * pixFindRectangleInCC ( PIX *pixs, BOX *boxs, l_float32 fract, l_int32 dir, l_int32 select, l_int32 debug );
+PIX * pixAutoPhotoinvert ( PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb );
 l_ok pixSetSelectCmap ( PIX *pixs, BOX *box, l_int32 sindex, l_int32 rval, l_int32 gval, l_int32 bval );
 l_ok pixColorGrayRegionsCmap ( PIX *pixs, BOXA *boxa, l_int32 type, l_int32 rval, l_int32 gval, l_int32 bval );
 l_ok pixColorGrayCmap ( PIX *pixs, BOX *box, l_int32 type, l_int32 rval, l_int32 gval, l_int32 bval );
@@ -2962,6 +2982,8 @@ l_ok addColorizedGrayToCmap ( PIXCMAP *cmap, l_int32 type, l_int32 rval, l_int32
 l_ok pixSetSelectMaskedCmap ( PIX *pixs, PIX *pixm, l_int32 x, l_int32 y, l_int32 sindex, l_int32 rval, l_int32 gval, l_int32 bval );
 l_ok pixSetMaskedCmap ( PIX *pixs, PIX *pixm, l_int32 x, l_int32 y, l_int32 rval, l_int32 gval, l_int32 bval );
 char * parseForProtos ( const char *filein, const char *prestring );
+l_ok partifyFiles ( const char *dirname, const char *substr, l_int32 nparts, const char *outroot, const char *debugfile );
+l_ok partifyPixac ( PIXAC *pixac, l_int32 nparts, const char *outroot, PIXA *pixadb );
 BOXA * boxaGetWhiteblocks ( BOXA *boxas, BOX *box, l_int32 sortflag, l_int32 maxboxes, l_float32 maxoverlap, l_int32 maxperim, l_float32 fract, l_int32 maxpops );
 BOXA * boxaPruneSortedOnOverlap ( BOXA *boxas, l_float32 maxoverlap );
 l_ok convertFilesToPdf ( const char *dirname, const char *substr, l_int32 res, l_float32 scalefactor, l_int32 type, l_int32 quality, const char *title, const char *fileout );
@@ -3010,14 +3032,15 @@ void l_pdfSetDateAndVersion ( l_int32 flag );
 void setPixMemoryManager ( alloc_fn allocator, dealloc_fn deallocator );
 PIX * pixCreate ( l_int32 width, l_int32 height, l_int32 depth );
 PIX * pixCreateNoInit ( l_int32 width, l_int32 height, l_int32 depth );
-PIX * pixCreateTemplate ( PIX *pixs );
-PIX * pixCreateTemplateNoInit ( PIX *pixs );
+PIX * pixCreateTemplate ( const PIX *pixs );
+PIX * pixCreateTemplateNoInit ( const PIX *pixs );
+PIX * pixCreateWithCmap ( l_int32 width, l_int32 height, l_int32 depth, l_int32 initcolor );
 PIX * pixCreateHeader ( l_int32 width, l_int32 height, l_int32 depth );
 PIX * pixClone ( PIX *pixs );
 void pixDestroy ( PIX **ppix );
-PIX * pixCopy ( PIX *pixd, PIX *pixs );
+PIX * pixCopy ( PIX *pixd, const PIX *pixs );
 l_ok pixResizeImageData ( PIX *pixd, const PIX *pixs );
-l_ok pixCopyColormap ( PIX *pixd, PIX *pixs );
+l_ok pixCopyColormap ( PIX *pixd, const PIX *pixs );
 l_int32 pixSizesEqual ( const PIX *pix1, const PIX *pix2 );
 l_ok pixTransferAllData ( PIX *pixd, PIX **ppixs, l_int32 copytext, l_int32 copyformat );
 l_ok pixSwapAndDestroy ( PIX **ppixd, PIX **ppixs );
@@ -3052,7 +3075,7 @@ l_int32 pixSetSpecial ( PIX *pix, l_int32 special );
 char * pixGetText ( PIX *pix );
 l_ok pixSetText ( PIX *pix, const char *textstring );
 l_ok pixAddText ( PIX *pix, const char *textstring );
-l_int32 pixCopyText ( PIX *pixd, PIX *pixs );
+l_int32 pixCopyText ( PIX *pixd, const PIX *pixs );
 PIXCMAP * pixGetColormap ( PIX *pix );
 l_ok pixSetColormap ( PIX *pix, PIXCMAP *colormap );
 l_ok pixDestroyColormap ( PIX *pix );
@@ -3061,11 +3084,12 @@ l_int32 pixSetData ( PIX *pix, l_uint32 *data );
 l_uint32 * pixExtractData ( PIX *pixs );
 l_int32 pixFreeData ( PIX *pix );
 void ** pixGetLinePtrs ( PIX *pix, l_int32 *psize );
-l_ok pixPrintStreamInfo ( FILE *fp, PIX *pix, const char *text );
+l_ok pixPrintStreamInfo ( FILE *fp, const PIX *pix, const char *text );
 l_ok pixGetPixel ( PIX *pix, l_int32 x, l_int32 y, l_uint32 *pval );
 l_ok pixSetPixel ( PIX *pix, l_int32 x, l_int32 y, l_uint32 val );
 l_ok pixGetRGBPixel ( PIX *pix, l_int32 x, l_int32 y, l_int32 *prval, l_int32 *pgval, l_int32 *pbval );
 l_ok pixSetRGBPixel ( PIX *pix, l_int32 x, l_int32 y, l_int32 rval, l_int32 gval, l_int32 bval );
+l_ok pixSetCmapPixel ( PIX *pix, l_int32 x, l_int32 y, l_int32 rval, l_int32 gval, l_int32 bval );
 l_ok pixGetRandomPixel ( PIX *pix, l_uint32 *pval, l_int32 *px, l_int32 *py );
 l_ok pixClearPixel ( PIX *pix, l_int32 x, l_int32 y );
 l_ok pixFlipPixel ( PIX *pix, l_int32 x, l_int32 y );
@@ -3111,6 +3135,7 @@ void extractRGBValues ( l_uint32 pixel, l_int32 *prval, l_int32 *pgval, l_int32 
 void extractRGBAValues ( l_uint32 pixel, l_int32 *prval, l_int32 *pgval, l_int32 *pbval, l_int32 *paval );
 l_int32 extractMinMaxComponent ( l_uint32 pixel, l_int32 type );
 l_ok pixGetRGBLine ( PIX *pixs, l_int32 row, l_uint8 *bufr, l_uint8 *bufg, l_uint8 *bufb );
+l_ok setLineDataVal ( l_uint32 *line, l_int32 j, l_int32 d, l_uint32 val );
 PIX * pixEndianByteSwapNew ( PIX *pixs );
 l_ok pixEndianByteSwap ( PIX *pixs );
 l_int32 lineEndianByteSwap ( l_uint32 *datad, l_uint32 *datas, l_int32 wpl );
@@ -3126,6 +3151,7 @@ l_ok pixSetMaskedGeneral ( PIX *pixd, PIX *pixm, l_uint32 val, l_int32 x, l_int3
 l_ok pixCombineMasked ( PIX *pixd, PIX *pixs, PIX *pixm );
 l_ok pixCombineMaskedGeneral ( PIX *pixd, PIX *pixs, PIX *pixm, l_int32 x, l_int32 y );
 l_ok pixPaintThroughMask ( PIX *pixd, PIX *pixm, l_int32 x, l_int32 y, l_uint32 val );
+PIX * pixCopyWithBoxa ( PIX *pixs, BOXA *boxa, l_int32 background );
 l_ok pixPaintSelfThroughMask ( PIX *pixd, PIX *pixm, l_int32 x, l_int32 y, l_int32 searchdir, l_int32 mindist, l_int32 tilesize, l_int32 ntiles, l_int32 distblend );
 PIX * pixMakeMaskFromVal ( PIX *pixs, l_int32 val );
 PIX * pixMakeMaskFromLUT ( PIX *pixs, l_int32 *tab );
@@ -3133,6 +3159,7 @@ PIX * pixMakeArbMaskFromRGB ( PIX *pixs, l_float32 rc, l_float32 gc, l_float32 b
 PIX * pixSetUnderTransparency ( PIX *pixs, l_uint32 val, l_int32 debug );
 PIX * pixMakeAlphaFromMask ( PIX *pixs, l_int32 dist, BOX **pbox );
 l_ok pixGetColorNearMaskBoundary ( PIX *pixs, PIX *pixm, BOX *box, l_int32 dist, l_uint32 *pval, l_int32 debug );
+PIX * pixDisplaySelectedPixels ( PIX *pixs, PIX *pixm, SEL *sel, l_uint32 val );
 PIX * pixInvert ( PIX *pixd, PIX *pixs );
 PIX * pixOr ( PIX *pixd, PIX *pixs1, PIX *pixs2 );
 PIX * pixAnd ( PIX *pixd, PIX *pixs1, PIX *pixs2 );
@@ -3154,7 +3181,8 @@ l_int32 * makePixelSumTab8 ( void );
 l_int32 * makePixelCentroidTab8 ( void );
 NUMA * pixAverageByRow ( PIX *pix, BOX *box, l_int32 type );
 NUMA * pixAverageByColumn ( PIX *pix, BOX *box, l_int32 type );
-l_ok pixAverageInRect ( PIX *pix, BOX *box, l_float32 *pave );
+l_ok pixAverageInRect ( PIX *pixs, PIX *pixm, BOX *box, l_int32 minval, l_int32 maxval, l_int32 subsamp, l_float32 *pave );
+l_ok pixAverageInRectRGB ( PIX *pixs, PIX *pixm, BOX *box, l_int32 subsamp, l_uint32 *pave );
 NUMA * pixVarianceByRow ( PIX *pix, BOX *box );
 NUMA * pixVarianceByColumn ( PIX *pix, BOX *box );
 l_ok pixVarianceInRect ( PIX *pix, BOX *box, l_float32 *prootvar );
@@ -3174,7 +3202,7 @@ l_ok pixGetColorHistogramMasked ( PIX *pixs, PIX *pixm, l_int32 x, l_int32 y, l_
 NUMA * pixGetCmapHistogram ( PIX *pixs, l_int32 factor );
 NUMA * pixGetCmapHistogramMasked ( PIX *pixs, PIX *pixm, l_int32 x, l_int32 y, l_int32 factor );
 NUMA * pixGetCmapHistogramInRect ( PIX *pixs, BOX *box, l_int32 factor );
-l_int32 pixCountRGBColors ( PIX *pixs );
+l_ok pixCountRGBColors ( PIX *pixs, l_int32 factor, l_int32 *pncolors );
 L_AMAP * pixGetColorAmapHistogram ( PIX *pixs, l_int32 factor );
 l_int32 amapGetCountForColor ( L_AMAP *amap, l_uint32 val );
 l_ok pixGetRankValue ( PIX *pixs, l_int32 factor, l_float32 rank, l_uint32 *pvalue );
@@ -3192,8 +3220,8 @@ l_ok pixGetRangeValues ( PIX *pixs, l_int32 factor, l_int32 color, l_int32 *pmin
 l_ok pixGetExtremeValue ( PIX *pixs, l_int32 factor, l_int32 type, l_int32 *prval, l_int32 *pgval, l_int32 *pbval, l_int32 *pgrayval );
 l_ok pixGetMaxValueInRect ( PIX *pixs, BOX *box, l_uint32 *pmaxval, l_int32 *pxmax, l_int32 *pymax );
 l_ok pixGetBinnedComponentRange ( PIX *pixs, l_int32 nbins, l_int32 factor, l_int32 color, l_int32 *pminval, l_int32 *pmaxval, l_uint32 **pcarray, l_int32 fontsize );
-l_ok pixGetRankColorArray ( PIX *pixs, l_int32 nbins, l_int32 type, l_int32 factor, l_uint32 **pcarray, l_int32 debugflag, l_int32 fontsize );
-l_ok pixGetBinnedColor ( PIX *pixs, PIX *pixg, l_int32 factor, l_int32 nbins, NUMA *nalut, l_uint32 **pcarray, l_int32 debugflag );
+l_ok pixGetRankColorArray ( PIX *pixs, l_int32 nbins, l_int32 type, l_int32 factor, l_uint32 **pcarray, PIXA *pixadb, l_int32 fontsize );
+l_ok pixGetBinnedColor ( PIX *pixs, PIX *pixg, l_int32 factor, l_int32 nbins, NUMA *nalut, l_uint32 **pcarray, PIXA *pixadb );
 PIX * pixDisplayColorArray ( l_uint32 *carray, l_int32 ncolors, l_int32 side, l_int32 ncols, l_int32 fontsize );
 PIX * pixRankBinByStrip ( PIX *pixs, l_int32 direction, l_int32 size, l_int32 nbins, l_int32 type );
 PIX * pixaGetAlignedStats ( PIXA *pixa, l_int32 type, l_int32 nbins, l_int32 thresh );
@@ -3226,6 +3254,7 @@ PIX * pixCropToSize ( PIX *pixs, l_int32 w, l_int32 h );
 PIX * pixResizeToMatch ( PIX *pixs, PIX *pixt, l_int32 w, l_int32 h );
 PIX * pixSelectComponentBySize ( PIX *pixs, l_int32 rankorder, l_int32 type, l_int32 connectivity, BOX **pbox );
 PIX * pixFilterComponentBySize ( PIX *pixs, l_int32 rankorder, l_int32 type, l_int32 connectivity, BOX **pbox );
+PIX * pixMakeSymmetricMask ( l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type );
 PIX * pixMakeFrameMask ( l_int32 w, l_int32 h, l_float32 hf1, l_float32 hf2, l_float32 vf1, l_float32 vf2 );
 PIX * pixMakeCoveringOfRectangles ( PIX *pixs, l_int32 maxiters );
 l_ok pixFractionFgInMask ( PIX *pix1, PIX *pix2, l_float32 *pfract );
@@ -3368,7 +3397,6 @@ PIXA * pixaConvertToSameDepth ( PIXA *pixas );
 l_ok pixaEqual ( PIXA *pixa1, PIXA *pixa2, l_int32 maxdist, NUMA **pnaindex, l_int32 *psame );
 l_ok pixaSetFullSizeBoxa ( PIXA *pixa );
 PIX * pixaDisplay ( PIXA *pixa, l_int32 w, l_int32 h );
-PIX * pixaDisplayOnColor ( PIXA *pixa, l_int32 w, l_int32 h, l_uint32 bgcolor );
 PIX * pixaDisplayRandomCmap ( PIXA *pixa, l_int32 w, l_int32 h );
 PIX * pixaDisplayLinearly ( PIXA *pixas, l_int32 direction, l_float32 scalefactor, l_int32 background, l_int32 spacing, l_int32 border, BOXA **pboxa );
 PIX * pixaDisplayOnLattice ( PIXA *pixa, l_int32 cellw, l_int32 cellh, l_int32 *pncols, BOXA **pboxa );
@@ -3380,7 +3408,7 @@ PIX * pixaDisplayTiledAndScaled ( PIXA *pixa, l_int32 outdepth, l_int32 tilewidt
 PIX * pixaDisplayTiledWithText ( PIXA *pixa, l_int32 maxwidth, l_float32 scalefactor, l_int32 spacing, l_int32 border, l_int32 fontsize, l_uint32 textcolor );
 PIX * pixaDisplayTiledByIndex ( PIXA *pixa, NUMA *na, l_int32 width, l_int32 spacing, l_int32 border, l_int32 fontsize, l_uint32 textcolor );
 PIX * pixaaDisplay ( PIXAA *paa, l_int32 w, l_int32 h );
-PIX * pixaaDisplayByPixa ( PIXAA *paa, l_int32 xspace, l_int32 yspace, l_int32 maxw );
+PIX * pixaaDisplayByPixa ( PIXAA *paa, l_int32 maxnx, l_float32 scalefactor, l_int32 hspacing, l_int32 vspacing, l_int32 border );
 PIXA * pixaaDisplayTiledAndScaled ( PIXAA *paa, l_int32 outdepth, l_int32 tilewidth, l_int32 ncols, l_int32 background, l_int32 spacing, l_int32 border );
 PIXA * pixaConvertTo1 ( PIXA *pixas, l_int32 thresh );
 PIXA * pixaConvertTo8 ( PIXA *pixas, l_int32 cmapflag );
@@ -3398,17 +3426,18 @@ PIXA * convertToNUpPixa ( const char *dir, const char *substr, l_int32 nx, l_int
 PIXA * pixaConvertToNUpPixa ( PIXA *pixas, SARRAY *sa, l_int32 nx, l_int32 ny, l_int32 tw, l_int32 spacing, l_int32 border, l_int32 fontsize );
 l_ok pixaCompareInPdf ( PIXA *pixa1, PIXA *pixa2, l_int32 nx, l_int32 ny, l_int32 tw, l_int32 spacing, l_int32 border, l_int32 fontsize, const char *fileout );
 l_ok pmsCreate ( size_t minsize, size_t smallest, NUMA *numalloc, const char *logfile );
-void pmsDestroy (  );
+void pmsDestroy ( void );
 void * pmsCustomAlloc ( size_t nbytes );
 void pmsCustomDealloc ( void *data );
 void * pmsGetAlloc ( size_t nbytes );
 l_ok pmsGetLevelForAlloc ( size_t nbytes, l_int32 *plevel );
 l_ok pmsGetLevelForDealloc ( void *data, l_int32 *plevel );
-void pmsLogInfo (  );
+void pmsLogInfo ( void );
 l_ok pixAddConstantGray ( PIX *pixs, l_int32 val );
 l_ok pixMultConstantGray ( PIX *pixs, l_float32 val );
 PIX * pixAddGray ( PIX *pixd, PIX *pixs1, PIX *pixs2 );
 PIX * pixSubtractGray ( PIX *pixd, PIX *pixs1, PIX *pixs2 );
+PIX * pixMultiplyGray ( PIX *pixs, PIX *pixg, l_float32 norm );
 PIX * pixThresholdToValue ( PIX *pixd, PIX *pixs, l_int32 threshval, l_int32 setval );
 PIX * pixInitAccumulate ( l_int32 w, l_int32 h, l_uint32 offset );
 PIX * pixFinalAccumulate ( PIX *pixs, l_uint32 offset, l_int32 depth );
@@ -3507,6 +3536,7 @@ PIX * pixConvertTo2 ( PIX *pixs );
 PIX * pixConvert8To2 ( PIX *pix );
 PIX * pixConvertTo4 ( PIX *pixs );
 PIX * pixConvert8To4 ( PIX *pix );
+PIX * pixConvertTo1Adaptive ( PIX *pixs );
 PIX * pixConvertTo1 ( PIX *pixs, l_int32 threshold );
 PIX * pixConvertTo1BySampling ( PIX *pixs, l_int32 factor, l_int32 threshold );
 PIX * pixConvertTo8 ( PIX *pixs, l_int32 cmapflag );
@@ -3581,31 +3611,24 @@ l_ok convertFilesToPS ( const char *dirin, const char *substr, l_int32 res, cons
 l_ok sarrayConvertFilesToPS ( SARRAY *sa, l_int32 res, const char *fileout );
 l_ok convertFilesFittedToPS ( const char *dirin, const char *substr, l_float32 xpts, l_float32 ypts, const char *fileout );
 l_ok sarrayConvertFilesFittedToPS ( SARRAY *sa, l_float32 xpts, l_float32 ypts, const char *fileout );
-l_ok writeImageCompressedToPSFile ( const char *filein, const char *fileout, l_int32 res, l_int32 *pfirstfile, l_int32 *pindex );
+l_ok writeImageCompressedToPSFile ( const char *filein, const char *fileout, l_int32 res, l_int32 *pindex );
 l_ok convertSegmentedPagesToPS ( const char *pagedir, const char *pagestr, l_int32 page_numpre, const char *maskdir, const char *maskstr, l_int32 mask_numpre, l_int32 numpost, l_int32 maxnum, l_float32 textscale, l_float32 imagescale, l_int32 threshold, const char *fileout );
 l_ok pixWriteSegmentedPageToPS ( PIX *pixs, PIX *pixm, l_float32 textscale, l_float32 imagescale, l_int32 threshold, l_int32 pageno, const char *fileout );
 l_ok pixWriteMixedToPS ( PIX *pixb, PIX *pixc, l_float32 scale, l_int32 pageno, const char *fileout );
 l_ok convertToPSEmbed ( const char *filein, const char *fileout, l_int32 level );
 l_ok pixaWriteCompressedToPS ( PIXA *pixa, const char *fileout, l_int32 res, l_int32 level );
+l_ok pixWriteCompressedToPS ( PIX *pix, const char *fileout, l_int32 res, l_int32 level, l_int32 *pindex );
 l_ok pixWritePSEmbed ( const char *filein, const char *fileout );
 l_ok pixWriteStreamPS ( FILE *fp, PIX *pix, BOX *box, l_int32 res, l_float32 scale );
 char * pixWriteStringPS ( PIX *pixs, BOX *box, l_int32 res, l_float32 scale );
 char * generateUncompressedPS ( char *hexdata, l_int32 w, l_int32 h, l_int32 d, l_int32 psbpl, l_int32 bps, l_float32 xpt, l_float32 ypt, l_float32 wpt, l_float32 hpt, l_int32 boxflag );
-void getScaledParametersPS ( BOX *box, l_int32 wpix, l_int32 hpix, l_int32 res, l_float32 scale, l_float32 *pxpt, l_float32 *pypt, l_float32 *pwpt, l_float32 *phpt );
-void convertByteToHexAscii ( l_uint8 byteval, char *pnib1, char *pnib2 );
 l_ok convertJpegToPSEmbed ( const char *filein, const char *fileout );
 l_ok convertJpegToPS ( const char *filein, const char *fileout, const char *operation, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 endpage );
-l_ok convertJpegToPSString ( const char *filein, char **poutstr, l_int32 *pnbytes, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 endpage );
-char * generateJpegPS ( const char *filein, L_COMP_DATA *cid, l_float32 xpt, l_float32 ypt, l_float32 wpt, l_float32 hpt, l_int32 pageno, l_int32 endpage );
 l_ok convertG4ToPSEmbed ( const char *filein, const char *fileout );
 l_ok convertG4ToPS ( const char *filein, const char *fileout, const char *operation, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 maskflag, l_int32 endpage );
-l_ok convertG4ToPSString ( const char *filein, char **poutstr, l_int32 *pnbytes, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 maskflag, l_int32 endpage );
-char * generateG4PS ( const char *filein, L_COMP_DATA *cid, l_float32 xpt, l_float32 ypt, l_float32 wpt, l_float32 hpt, l_int32 maskflag, l_int32 pageno, l_int32 endpage );
 l_ok convertTiffMultipageToPS ( const char *filein, const char *fileout, l_float32 fillfract );
 l_ok convertFlateToPSEmbed ( const char *filein, const char *fileout );
 l_ok convertFlateToPS ( const char *filein, const char *fileout, const char *operation, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 endpage );
-l_ok convertFlateToPSString ( const char *filein, char **poutstr, l_int32 *pnbytes, l_int32 x, l_int32 y, l_int32 res, l_float32 scale, l_int32 pageno, l_int32 endpage );
-char * generateFlatePS ( const char *filein, L_COMP_DATA *cid, l_float32 xpt, l_float32 ypt, l_float32 wpt, l_float32 hpt, l_int32 pageno, l_int32 endpage );
 l_ok pixWriteMemPS ( l_uint8 **pdata, size_t *psize, PIX *pix, BOX *box, l_int32 res, l_float32 scale );
 l_int32 getResLetterPage ( l_int32 w, l_int32 h, l_float32 fillfract );
 l_int32 getResA4Page ( l_int32 w, l_int32 h, l_float32 fillfract );
@@ -3700,6 +3723,8 @@ l_ok ptaGetSortIndex ( PTA *ptas, l_int32 sorttype, l_int32 sortorder, NUMA **pn
 PTA * ptaSortByIndex ( PTA *ptas, NUMA *naindex );
 PTAA * ptaaSortByIndex ( PTAA *ptaas, NUMA *naindex );
 l_ok ptaGetRankValue ( PTA *pta, l_float32 fract, PTA *ptasort, l_int32 sorttype, l_float32 *pval );
+PTA * ptaSort2d ( PTA *pta );
+l_ok ptaEqual ( PTA *pta1, PTA *pta2, l_int32 *psame );
 PTA * ptaUnionByAset ( PTA *pta1, PTA *pta2 );
 PTA * ptaRemoveDupsByAset ( PTA *ptas );
 PTA * ptaIntersectionByAset ( PTA *pta1, PTA *pta2 );
@@ -4057,6 +4082,7 @@ SEL * selCreateFromPta ( PTA *pta, l_int32 cy, l_int32 cx, const char *name );
 SEL * selCreateFromPix ( PIX *pix, l_int32 cy, l_int32 cx, const char *name );
 SEL * selReadFromColorImage ( const char *pathname );
 SEL * selCreateFromColorPix ( PIX *pixs, const char *selname );
+SELA * selaCreateFromColorPixa ( PIXA *pixa, SARRAY *sa );
 PIX * selDisplayInPix ( SEL *sel, l_int32 size, l_int32 gthick );
 PIX * selaDisplayInPix ( SELA *sela, l_int32 size, l_int32 gthick, l_int32 spacing, l_int32 ncols );
 SELA * selaAddBasic ( SELA *sela );
@@ -4068,6 +4094,7 @@ SELA * selaAddTJunctions ( SELA *sela, l_float32 hlsize, l_float32 mdist, l_int3
 SELA * sela4ccThin ( SELA *sela );
 SELA * sela8ccThin ( SELA *sela );
 SELA * sela4and8ccThin ( SELA *sela );
+SEL * selMakePlusSign ( l_int32 size, l_int32 linewidth );
 SEL * pixGenerateSelWithRuns ( PIX *pixs, l_int32 nhlines, l_int32 nvlines, l_int32 distance, l_int32 minlength, l_int32 toppix, l_int32 botpix, l_int32 leftpix, l_int32 rightpix, PIX **ppixe );
 SEL * pixGenerateSelRandom ( PIX *pixs, l_float32 hitfract, l_float32 missfract, l_int32 distance, l_int32 toppix, l_int32 botpix, l_int32 leftpix, l_int32 rightpix, PIX **ppixe );
 SEL * pixGenerateSelBoundary ( PIX *pixs, l_int32 hitdist, l_int32 missdist, l_int32 hitskip, l_int32 missskip, l_int32 topflag, l_int32 botflag, l_int32 leftflag, l_int32 rightflag, PIX **ppixe );
@@ -4107,7 +4134,7 @@ PIX * pixReadMemSpix ( const l_uint8 *data, size_t size );
 l_ok pixWriteMemSpix ( l_uint8 **pdata, size_t *psize, PIX *pix );
 l_ok pixSerializeToMemory ( PIX *pixs, l_uint32 **pdata, size_t *pnbytes );
 PIX * pixDeserializeFromMemory ( const l_uint32 *data, size_t nbytes );
-L_STACK * lstackCreate ( l_int32 nalloc );
+L_STACK * lstackCreate ( l_int32 n );
 void lstackDestroy ( L_STACK **plstack, l_int32 freeflag );
 l_ok lstackAdd ( L_STACK *lstack, void *item );
 void * lstackRemove ( L_STACK *lstack );
@@ -4173,6 +4200,8 @@ l_int32 setMsgSeverity ( l_int32 newsev );
 l_int32 returnErrorInt ( const char *msg, const char *procname, l_int32 ival );
 l_float32 returnErrorFloat ( const char *msg, const char *procname, l_float32 fval );
 void * returnErrorPtr ( const char *msg, const char *procname, void *pval );
+void leptSetStderrHandler ( void  ( *handler ) ( const char * ) );
+void lept_stderr ( const char *fmt, ... );
 l_ok filesAreIdentical ( const char *fname1, const char *fname2, l_int32 *psame );
 l_uint16 convertOnLittleEnd16 ( l_uint16 shortin );
 l_uint16 convertOnBigEnd16 ( l_uint16 shortin );
@@ -4180,6 +4209,7 @@ l_uint32 convertOnLittleEnd32 ( l_uint32 wordin );
 l_uint32 convertOnBigEnd32 ( l_uint32 wordin );
 l_ok fileCorruptByDeletion ( const char *filein, l_float32 loc, l_float32 size, const char *fileout );
 l_ok fileCorruptByMutation ( const char *filein, l_float32 loc, l_float32 size, const char *fileout );
+l_ok fileReplaceBytes ( const char *filein, l_int32 start, l_int32 nbytes, l_uint8 *newdata, size_t newsize, const char *fileout );
 l_ok genRandomIntegerInRange ( l_int32 range, l_int32 seed, l_int32 *pval );
 l_int32 lept_roundftoi ( l_float32 fval );
 l_ok l_hashStringToUint64 ( const char *str, l_uint64 *phash );
@@ -4189,7 +4219,7 @@ l_ok findNextLargerPrime ( l_int32 start, l_uint32 *pprime );
 l_ok lept_isPrime ( l_uint64 n, l_int32 *pis_prime, l_uint32 *pfactor );
 l_uint32 convertIntToGrayCode ( l_uint32 val );
 l_uint32 convertGrayCodeToInt ( l_uint32 val );
-char * getLeptonicaVersion (  );
+char * getLeptonicaVersion ( void );
 void startTimer ( void );
 l_float32 stopTimer ( void );
 L_TIMER startTimerNested ( void );
@@ -4197,7 +4227,7 @@ l_float32 stopTimerNested ( L_TIMER rusage_start );
 void l_getCurrentTime ( l_int32 *sec, l_int32 *usec );
 L_WALLTIMER * startWallTimer ( void );
 l_float32 stopWallTimer ( L_WALLTIMER **ptimer );
-char * l_getFormattedDate (  );
+char * l_getFormattedDate ( void );
 char * stringNew ( const char *src );
 l_ok stringCopy ( char *dest, const char *src, l_int32 n );
 char * stringCopySegment ( const char *src, l_int32 start, l_int32 nbytes );
@@ -4212,9 +4242,11 @@ char * strtokSafe ( char *cstr, const char *seps, char **psaveptr );
 l_ok stringSplitOnToken ( char *cstr, const char *seps, char **phead, char **ptail );
 l_ok stringCheckForChars ( const char *src, const char *chars, l_int32 *pfound );
 char * stringRemoveChars ( const char *src, const char *remchars );
-l_int32 stringFindSubstr ( const char *src, const char *sub, l_int32 *ploc );
-char * stringReplaceSubstr ( const char *src, const char *sub1, const char *sub2, l_int32 *pfound, l_int32 *ploc );
 char * stringReplaceEachSubstr ( const char *src, const char *sub1, const char *sub2, l_int32 *pcount );
+char * stringReplaceSubstr ( const char *src, const char *sub1, const char *sub2, l_int32 *ploc, l_int32 *pfound );
+L_DNA * stringFindEachSubstr ( const char *src, const char *sub );
+l_int32 stringFindSubstr ( const char *src, const char *sub, l_int32 *ploc );
+l_uint8 * arrayReplaceEachSequence ( const l_uint8 *datas, size_t dataslen, const l_uint8 *seq, size_t seqlen, const l_uint8 *newseq, size_t newseqlen, size_t *pdatadlen, l_int32 *pcount );
 L_DNA * arrayFindEachSequence ( const l_uint8 *data, size_t datalen, const l_uint8 *sequence, size_t seqlen );
 l_ok arrayFindSequence ( const l_uint8 *data, size_t datalen, const l_uint8 *sequence, size_t seqlen, l_int32 *poffset, l_int32 *pfound );
 void * reallocNew ( void **pindata, l_int32 oldsize, l_int32 newsize );
@@ -4225,14 +4257,15 @@ l_uint8 * l_binaryReadSelectStream ( FILE *fp, size_t start, size_t nbytes, size
 l_ok l_binaryWrite ( const char *filename, const char *operation, const void *data, size_t nbytes );
 size_t nbytesInFile ( const char *filename );
 size_t fnbytesInFile ( FILE *fp );
-l_uint8 * l_binaryCopy ( l_uint8 *datas, size_t size );
+l_uint8 * l_binaryCopy ( const l_uint8 *datas, size_t size );
+l_ok l_binaryCompare ( const l_uint8 *data1, size_t size1, const l_uint8 *data2, size_t size2, l_int32 *psame );
 l_ok fileCopy ( const char *srcfile, const char *newfile );
 l_ok fileConcatenate ( const char *srcfile, const char *destfile );
 l_ok fileAppendString ( const char *filename, const char *str );
 FILE * fopenReadStream ( const char *filename );
 FILE * fopenWriteStream ( const char *filename, const char *modestring );
 FILE * fopenReadFromMemory ( const l_uint8 *data, size_t size );
-FILE * fopenWriteWinTempfile (  );
+FILE * fopenWriteWinTempfile ( void );
 FILE * lept_fopen ( const char *filename, const char *mode );
 l_ok lept_fclose ( FILE *fp );
 void * lept_calloc ( size_t nmemb, size_t size );
@@ -4254,7 +4287,7 @@ l_ok convertSepCharsInPath ( char *path, l_int32 type );
 char * genPathname ( const char *dir, const char *fname );
 l_ok makeTempDirname ( char *result, size_t nbytes, const char *subdir );
 l_ok modifyTrailingSlash ( char *path, size_t nbytes, l_int32 flag );
-char * l_makeTempFilename (  );
+char * l_makeTempFilename ( void );
 l_int32 extractNumberFromFilename ( const char *fname, l_int32 numpre, l_int32 numpost );
 PIX * pixSimpleCaptcha ( PIX *pixs, l_int32 border, l_int32 nterms, l_uint32 seed, l_uint32 color, l_int32 cmapflag );
 PIX * pixRandomHarmonicWarp ( PIX *pixs, l_float32 xmag, l_float32 ymag, l_float32 xfreq, l_float32 yfreq, l_int32 nx, l_int32 ny, l_uint32 seed, l_int32 grayval );
@@ -4272,6 +4305,9 @@ l_ok wshedApply ( L_WSHED *wshed );
 l_ok wshedBasins ( L_WSHED *wshed, PIXA **ppixa, NUMA **pnalevels );
 PIX * wshedRenderFill ( L_WSHED *wshed );
 PIX * wshedRenderColors ( L_WSHED *wshed );
+l_ok pixaWriteWebPAnim ( const char *filename, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless );
+l_ok pixaWriteStreamWebPAnim ( FILE *fp, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless );
+l_ok pixaWriteMemWebPAnim ( l_uint8 **pencdata, size_t *pencsize, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless );
 PIX * pixReadStreamWebP ( FILE *fp );
 PIX * pixReadMemWebP ( const l_uint8 *filedata, size_t filesize );
 l_ok readHeaderWebP ( const char *filename, l_int32 *pw, l_int32 *ph, l_int32 *pspp );
@@ -4295,11 +4331,13 @@ l_ok pixWriteMem ( l_uint8 **pdata, size_t *psize, PIX *pix, l_int32 format );
 l_ok l_fileDisplay ( const char *fname, l_int32 x, l_int32 y, l_float32 scale );
 l_ok pixDisplay ( PIX *pixs, l_int32 x, l_int32 y );
 l_ok pixDisplayWithTitle ( PIX *pixs, l_int32 x, l_int32 y, const char *title, l_int32 dispflag );
+PIX * pixMakeColorSquare ( l_uint32 color, l_int32 size, l_int32 addlabel, l_int32 location, l_uint32 textcolor );
+void l_chooseDisplayProg ( l_int32 selection );
+void changeFormatForMissingLib ( l_int32 *pformat );
+l_ok pixDisplayWrite ( PIX *pixs, l_int32 reduction );
 l_ok pixSaveTiled ( PIX *pixs, PIXA *pixa, l_float32 scalefactor, l_int32 newrow, l_int32 space, l_int32 dp );
 l_ok pixSaveTiledOutline ( PIX *pixs, PIXA *pixa, l_float32 scalefactor, l_int32 newrow, l_int32 space, l_int32 linewidth, l_int32 dp );
 l_ok pixSaveTiledWithText ( PIX *pixs, PIXA *pixa, l_int32 outwidth, l_int32 newrow, l_int32 space, l_int32 linewidth, L_BMF *bmf, const char *textstr, l_uint32 val, l_int32 location );
-void l_chooseDisplayProg ( l_int32 selection );
-l_ok pixDisplayWrite ( PIX *pixs, l_int32 reduction );
 l_uint8 * zlibCompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 l_uint8 * zlibUncompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 
@@ -4307,7 +4345,7 @@ l_uint8 * zlibUncompress ( l_uint8 *datain, size_t nin, size_t *pnout );
 )
 
 
-API_BINDING = False
+API_BINDING = True
 if API_BINDING:
     ffibuilder.set_source(
         "leptonica._leptonica",
