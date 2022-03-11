@@ -120,7 +120,7 @@ class _LeptonicaErrorTrap:
             if 'pixWrite: stream not opened' in leptonica_output:
                 raise LeptonicaIOError()
             if 'index not valid' in leptonica_output:
-                raise IndexError()
+                raise IndexError(leptonica_output)
             raise LeptonicaError(leptonica_output)
 
         return False
