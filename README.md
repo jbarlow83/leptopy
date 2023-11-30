@@ -4,9 +4,12 @@ This is a modern and comprehensive set of Python bindings for Leptonica, spun of
 OCRmyPDF and released under a BSD-2-Clause license like Leptonica itself.
 
 Leptonica is an image processing library geared towards scanned image processing,
-document processing, binary morphology and OCR.
+document processing, binary morphology and OCR. It has many interesting and useful
+features.
 
 CFFI is used instead of ctypes. The regularity and consistent design of Leptonica is
 exploited to create bindings efficiently.
 
 Python 3.6+ is required.
+
+Due to limited time, this library is not actively maintained.
